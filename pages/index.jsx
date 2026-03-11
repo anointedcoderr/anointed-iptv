@@ -12,22 +12,45 @@ const withMockHealth = (channels) => channels.map(c => ({
 
 function ChannelLogo({ logo, color, name, size = 54, radius = 16 }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const isUrl = logo && logo.startsWith("http");
-  const fallback = name ? name.slice(0, 4).toUpperCase() : "CH";
+  const fallback = name
+    ? name.split(" ").map(w => w[0]).join("").slice(0, 3).toUpperCase()
+    : "CH";
+  const shortText = logo && !logo.startsWith("http") ? logo : fallback;
 
-  if (isUrl && !imgFailed) {
-    return (
-      <img
-        src={logo}
-        alt={name}
-        onError={() => setImgFailed(true)}
-        style={{ width: size, height: size, borderRadius: radius, objectFit: "contain", background: "#fff", padding: 4, flexShrink: 0 }}
-      />
-    );
-  }
+  const showFallback = !isUrl || imgFailed;
+
   return (
-    <div style={{ width: size, height: size, borderRadius: radius, background: color || "#333", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.22, fontWeight: 900, color: "#fff", boxShadow: `0 8px 24px ${color || "#333"}55`, flexShrink: 0 }}>
-      {logo && !logo.startsWith("http") ? logo : fallback}
+    <div style={{ width: size, height: size, borderRadius: radius, flexShrink: 0, position: "relative", overflow: "hidden" }}>
+      {/* Always render fallback behind */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: color || "#333",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: size * 0.22, fontWeight: 900, color: "#fff",
+        boxShadow: `0 8px 24px ${color || "#333"}55`,
+      }}>
+        {shortText}
+      </div>
+      {/* Render image on top — disappears on error */}
+      {isUrl && !imgFailed && (
+        <img
+          src={logo}
+          alt={name}
+          onLoad={() => setImgLoaded(true)}
+          onError={() => setImgFailed(true)}
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            objectFit: "contain",
+            background: "#fff",
+            padding: size * 0.1,
+            opacity: imgLoaded ? 1 : 0,
+            transition: "opacity 0.2s ease",
+          }}
+        />
+      )}
     </div>
   );
 }
