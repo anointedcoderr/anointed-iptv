@@ -1,9 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+async function fetchM3U(url) {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0", Accept: "*/*" },
+    redirect: "follow",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch M3U (${res.status})`);
+  return res.text();
+}
 
 function getColor(group) {
   const map = {
@@ -16,20 +18,10 @@ function getColor(group) {
   return "#555";
 }
 
-async function fetchM3U(url) {
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0", Accept: "*/*" },
-    redirect: "follow",
-  });
-  if (!res.ok) throw new Error(`Failed to fetch M3U (${res.status})`);
-  return res.text();
-}
-
 function parseM3U(text) {
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
   const channels = [];
   let current = null;
-
   for (const line of lines) {
     if (line.startsWith("#EXTINF")) {
       const name = line.split(",").slice(1).join(",").trim() || "Unknown";
@@ -58,7 +50,6 @@ export default async function handler(req, res) {
 
   const { url, content } = req.body || {};
   let text = content;
-  let sourceUrl = url || null;
 
   try {
     if (!text && url) text = await fetchM3U(url);
@@ -67,38 +58,13 @@ export default async function handler(req, res) {
     const channels = parseM3U(text);
     if (!channels.length) return res.status(400).json({ error: "No channels found in this playlist." });
 
-    // Save ALL channels to Supabase when a URL is provided
-    if (sourceUrl && channels.length > 0) {
-      // Run DB save in background - don't block the response
-      (async () => {
-        try {
-          const rows = channels.map((c) => ({
-            name: c.name,
-            stream_url: c.url || null,
-            group_name: c.group,
-            logo: c.logo || null,
-            country: c.country || null,
-            source_url: sourceUrl,
-          }));
-
-          // Batch insert 250 at a time to stay within Supabase limits
-          const batchSize = 250;
-          for (let i = 0; i < rows.length; i += batchSize) {
-            await supabase
-              .from("shared_channels")
-              .upsert(rows.slice(i, i + batchSize), {
-                onConflict: "stream_url,name",
-                ignoreDuplicates: true,
-              });
-          }
-          console.log(`Saved ${rows.length} channels to shared_channels`);
-        } catch (dbErr) {
-          console.error("DB save error:", dbErr);
-        }
-      })();
-    }
-
-    return res.status(200).json({ channels, count: channels.length });
+    // Return channels immediately to the client
+    // Client will separately call /api/save-channels to persist them
+    return res.status(200).json({
+      channels,
+      count: channels.length,
+      sourceUrl: url || null,
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message || "Import failed." });
   }

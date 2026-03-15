@@ -179,7 +179,6 @@ function ContactFooter() {
         </div>
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.05)", marginTop:36, paddingTop:20, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
           <span style={{ fontSize:12, color:"rgba(255,255,255,0.2)" }}>© 2025 StreamPulse. All rights reserved.</span>
-          <span style={{ fontSize:12, color:"rgba(255,255,255,0.2)" }}>Built with Next.js · Supabase · Vercel</span>
         </div>
       </div>
     </footer>
@@ -265,13 +264,35 @@ export default function StreamPulse() {
     if (!m3uUrl && !m3uContent) { setImportMsg({ type:"error", text:"Please enter a URL or paste M3U content." }); return; }
     setImporting(true); setImportMsg(null);
     try {
+      // Step 1: Parse the M3U and get channels back immediately
       const res = await fetch("/api/import-m3u", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ url:m3uUrl||undefined, content:m3uContent||undefined }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
+      // Step 2: Show channels to user right away
       const withHealth = withMockHealth(data.channels.map((c,i) => ({ ...c, id:`imported_${i}_${Date.now()}` })));
       setImportedChannels(prev => [...prev, ...withHealth]);
-      setImportMsg({ type:"success", text:`✅ ${data.count} channels imported and shared with all users!` });
-      setTimeout(() => { setShowImport(false); setM3uUrl(""); setM3uContent(""); }, 2200);
+      setImportMsg({ type:"success", text:`✅ ${data.count} channels loaded! Saving to community database...` });
+
+      // Step 3: Save ALL channels to Supabase in a separate request
+      // This runs independently so Vercel timeout doesn't cut it short
+      if (m3uUrl) {
+        fetch("/api/save-channels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channels: data.channels,
+            sourceUrl: m3uUrl,
+          }),
+        })
+        .then(r => r.json())
+        .then(saved => {
+          console.log(`Saved to DB: ${saved.saved} of ${saved.total} channels`);
+        })
+        .catch(err => console.error("Background save error:", err));
+      }
+
+      setTimeout(() => { setShowImport(false); setM3uUrl(""); setM3uContent(""); }, 2400);
     } catch (err) {
       setImportMsg({ type:"error", text:`❌ ${err.message}` });
     } finally { setImporting(false); }
