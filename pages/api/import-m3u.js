@@ -67,32 +67,35 @@ export default async function handler(req, res) {
     const channels = parseM3U(text);
     if (!channels.length) return res.status(400).json({ error: "No channels found in this playlist." });
 
-    // Save to Supabase shared_channels (only if a URL was provided, not raw paste)
+    // Save ALL channels to Supabase when a URL is provided
     if (sourceUrl && channels.length > 0) {
-      try {
-        const rows = channels.slice(0, 5000).map((c) => ({
-          name: c.name,
-          stream_url: c.url || null,
-          group_name: c.group,
-          logo: c.logo || null,
-          country: c.country || null,
-          source_url: sourceUrl,
-        }));
+      // Run DB save in background - don't block the response
+      (async () => {
+        try {
+          const rows = channels.map((c) => ({
+            name: c.name,
+            stream_url: c.url || null,
+            group_name: c.group,
+            logo: c.logo || null,
+            country: c.country || null,
+            source_url: sourceUrl,
+          }));
 
-        // Insert in batches of 500 to avoid timeouts
-        const batchSize = 500;
-        for (let i = 0; i < rows.length; i += batchSize) {
-          await supabase
-            .from("shared_channels")
-            .upsert(rows.slice(i, i + batchSize), {
-              onConflict: "stream_url,name",
-              ignoreDuplicates: true,
-            });
+          // Batch insert 250 at a time to stay within Supabase limits
+          const batchSize = 250;
+          for (let i = 0; i < rows.length; i += batchSize) {
+            await supabase
+              .from("shared_channels")
+              .upsert(rows.slice(i, i + batchSize), {
+                onConflict: "stream_url,name",
+                ignoreDuplicates: true,
+              });
+          }
+          console.log(`Saved ${rows.length} channels to shared_channels`);
+        } catch (dbErr) {
+          console.error("DB save error:", dbErr);
         }
-      } catch (dbErr) {
-        console.error("DB save error:", dbErr);
-        // Don't fail the import if DB save fails
-      }
+      })();
     }
 
     return res.status(200).json({ channels, count: channels.length });
