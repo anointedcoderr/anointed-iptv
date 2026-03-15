@@ -186,7 +186,7 @@ function ContactFooter() {
             </p>
           </div>
           <div>
-            <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.3)", letterSpacing:"0.1em", marginBottom:16 }}>BUILT BY A DEVELOPER</div>
+            <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.3)", letterSpacing:"0.1em", marginBottom:16 }}>BUILT BY ME</div>
             <p style={{ color:"rgba(255,255,255,0.55)", fontSize:13, lineHeight:1.75, marginBottom:20 }}>
               Need a custom IPTV platform, Telegram bot, or Web3 tool built for your business? Let's talk.
             </p>
@@ -213,8 +213,8 @@ function ContactFooter() {
           </div>
         </div>
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.05)", marginTop:36, paddingTop:20, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
-          <span style={{ fontSize:12, color:"rgba(255,255,255,0.2)" }}>© 2025 StreamPulse. All rights reserved.</span>
-          <span style={{ fontSize:12, color:"rgba(255,255,255,0.2)" }}>Built with Next.js · Supabase · Vercel</span>
+          <span style={{ fontSize:12, color:"rgba(255,255,255,0.2)" }}>© 2026 StreamPulse. All rights reserved.</span>
+          <span style={{ fontSize:12, color:"rgba(255,255,255,0.2)" }}>Built with Advanced Capabilities</span>
         </div>
       </div>
     </footer>
