@@ -11,7 +11,8 @@ export default function App({ Component, pageProps }) {
           content="Anointed IPTV is a live demo by Anointed Coder. Browse free HLS test channels, build a watchlist, and import M3U playlists."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/images/logo.jpg" />
       </Head>
       <Component {...pageProps} />
     </>

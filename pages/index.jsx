@@ -338,8 +338,13 @@ function ContactFooter() {
         <div className="grid gap-10 md:grid-cols-2">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-rose-600 via-red-600 to-orange-500 shadow-lg shadow-rose-500/30">
-                <Tv className="size-5 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ring-2 ring-rose-500/40 shadow-lg shadow-rose-500/20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/logo.jpg"
+                  alt="Anointed Coder logo"
+                  className="h-full w-full object-cover"
+                />
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
                 Anointed{" "}
@@ -495,8 +500,13 @@ export default function AnointedIPTV() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-rose-600 via-red-600 to-orange-500 shadow-lg shadow-rose-500/30">
-              <Tv className="size-4 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-rose-500/40 shadow-lg shadow-rose-500/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/logo.jpg"
+                alt="Anointed Coder logo"
+                className="h-full w-full object-cover"
+              />
             </div>
             <span className="text-base font-bold tracking-tight text-foreground sm:text-lg">
               Anointed{" "}
