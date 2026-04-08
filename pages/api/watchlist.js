@@ -1,6 +1,8 @@
 import { supabase } from "../../lib/supabase";
 
 export default async function handler(req, res) {
+  if (!supabase) return res.status(503).json({ error: "Supabase not configured." });
+
   const { userId } = req.method === "GET" ? req.query : req.body;
 
   if (!userId) return res.status(400).json({ error: "userId required" });

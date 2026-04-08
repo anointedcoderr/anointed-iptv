@@ -1,4 +1,4 @@
--- StreamPulse Database Schema
+-- Anointed IPTV Database Schema
 
 -- CHANNELS TABLE
 -- Stores all channels (built-in + imported by users)

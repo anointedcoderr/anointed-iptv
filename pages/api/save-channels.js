@@ -1,9 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabase } from "../../lib/supabase";
 
 // Dedicated endpoint just for saving channels to DB
 // Called separately from the client after import succeeds
@@ -11,6 +6,7 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!supabase) return res.status(503).json({ error: "Supabase not configured." });
 
   const { channels, sourceUrl } = req.body || {};
 

@@ -13,8 +13,8 @@ export default async function handler(req, res) {
 
   const result = await pingStream(streamUrl);
 
-  // Save result to Supabase if a channelId was provided
-  if (channelId) {
+  // Save result to Supabase if a channelId was provided and Supabase is configured
+  if (channelId && supabase) {
     await supabase.from("health_logs").insert({
       channel_id: channelId,
       status:     result.status,
@@ -35,7 +35,7 @@ async function pingStream(url) {
     const response = await fetch(url, {
       method: "HEAD",
       signal: controller.signal,
-      headers: { "User-Agent": "StreamPulse-Healthcheck/1.0" },
+      headers: { "User-Agent": "AnointedIPTV-Healthcheck/1.0" },
     });
 
     clearTimeout(timeout);
