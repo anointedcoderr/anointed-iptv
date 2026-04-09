@@ -1,9 +1,10 @@
 import "../styles/globals.css"
 import Head from "next/head"
+import { AuthProvider } from "../lib/auth-context"
 
 export default function App({ Component, pageProps }) {
   return (
-    <>
+    <AuthProvider>
       <Head>
         <title>Anointed IPTV — Live HLS Streaming Demo</title>
         <meta
@@ -15,6 +16,6 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/images/logo.png" />
       </Head>
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   )
 }
