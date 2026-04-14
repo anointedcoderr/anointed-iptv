@@ -42,6 +42,13 @@ export default async function handler(req, res) {
   // Send verification email (fire and forget — don't block signup)
   sendVerificationEmail(cleanEmail, verifyToken).catch(console.error)
 
+  // Notify admin panel (owner email + 15-min follow-up + push)
+  fetch("https://admin.anointedcoder.com/api/demo-signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-secret": process.env.ADMIN_API_SECRET || "" },
+    body: JSON.stringify({ demoSlug: "anointed-iptv", userEmail: cleanEmail, username: name || null }),
+  }).catch((err) => console.error("[demo-signup notify]", err))
+
   // Log the user in immediately (but they'll be unverified until they click the link)
   const jwt = signToken({ id: user.id, email: user.email, isAdmin: user.is_admin })
   setSessionCookie(res, jwt)
