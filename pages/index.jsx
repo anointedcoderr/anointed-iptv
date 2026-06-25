@@ -17,10 +17,15 @@ import {
   LogIn,
   LogOut,
   UserPlus,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react"
 import Link from "next/link"
 import { BUILTIN_CHANNELS, getFeatured } from "../lib/channels"
 import { useAuth } from "../lib/auth-context"
+import { stableChannelId } from "../lib/channel-id"
+import { toggleId, fetchWatchlist, persistToggle } from "../lib/watchlist"
+import DemoNotice from "../components/DemoNotice"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -29,14 +34,23 @@ const statusColor = (s) =>
     ? "text-emerald-400"
     : s === "degraded"
     ? "text-amber-400"
+    : s === "unknown"
+    ? "text-muted-foreground"
     : "text-rose-400"
 
 const statusDot = (s) =>
-  s === "online" ? "bg-emerald-400" : s === "degraded" ? "bg-amber-400" : "bg-rose-400"
+  s === "online"
+    ? "bg-emerald-400"
+    : s === "degraded"
+    ? "bg-amber-400"
+    : s === "unknown"
+    ? "bg-muted-foreground"
+    : "bg-rose-400"
 
 const withMockHealth = (channels) =>
   channels.map((c) => ({
     ...c,
+    cid: stableChannelId(c),
     status: Math.random() > 0.12 ? "online" : Math.random() > 0.5 ? "degraded" : "offline",
     latency: Math.floor(Math.random() * 300) + 60,
     uptime: parseFloat((Math.random() * 15 + 84).toFixed(1)),
@@ -183,13 +197,14 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => onToggleWatchlist(channel.id)}
+                onClick={() => onToggleWatchlist(channel.cid ?? stableChannelId(channel))}
                 className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
                   isWatchlisted
                     ? "border-rose-500/50 bg-rose-500/10 text-rose-400"
                     : "border-border bg-muted text-muted-foreground hover:text-foreground"
                 }`}
-                aria-label="Toggle watchlist"
+                aria-label={`${isWatchlisted ? "Remove" : "Add"} ${channel.name} ${isWatchlisted ? "from" : "to"} watchlist`}
+                aria-pressed={isWatchlisted}
               >
                 <Heart className={`size-4 ${isWatchlisted ? "fill-rose-400" : ""}`} />
               </button>
@@ -285,10 +300,11 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onToggleWatchlist(channel.id)
+            onToggleWatchlist(channel.cid ?? stableChannelId(channel))
           }}
-          className="absolute left-2 top-2 rounded-md p-1 transition-colors"
-          aria-label="Toggle watchlist"
+          className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-md transition-colors"
+          aria-label={`${isWatchlisted ? "Remove" : "Add"} ${channel.name} ${isWatchlisted ? "from" : "to"} watchlist`}
+          aria-pressed={isWatchlisted}
         >
           <Heart
             className={`size-4 ${
@@ -307,7 +323,7 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
         {/* Lock badge for non-free channels */}
         {isLocked && (
           <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-amber-600/90 px-1.5 py-0.5 text-[9px] font-bold text-white">
-            <Lock className="size-2.5" /> MEMBERS
+            <Lock className="size-2.5" /> VERIFIED
           </div>
         )}
 
@@ -389,8 +405,9 @@ function ContactFooter() {
               >
                 Anointed Coder
               </a>{" "}
-              showcasing live HLS playback, watchlist persistence, M3U playlist import, and stream
-              health monitoring. Ships with free public test streams — fully legal demo content.
+              showcasing live HLS playback, account-saved watchlists, M3U playlist import, and
+              simulated stream-health monitoring. Ships with free public test streams — fully legal
+              demo content.
             </p>
           </div>
           <div>
@@ -430,10 +447,11 @@ function ContactFooter() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function AnointedIPTV() {
-  const { user, logout } = useAuth()
+  const { user, logout, resendVerification } = useAuth()
   const [allChannels, setAllChannels] = useState(BUILTIN_CHANNELS)
   const [importedChannels, setImportedChannels] = useState([])
   const [watchlist, setWatchlist] = useState([])
+  const [resendState, setResendState] = useState(null) // null | "sending" | "sent" | "error"
   const [playing, setPlaying] = useState(null)
   const [search, setSearch] = useState("")
   const [activeNav, setActiveNav] = useState("Browse")
@@ -446,6 +464,7 @@ export default function AnointedIPTV() {
   const [monitorSearch, setMonitorSearch] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLockedModal, setShowLockedModal] = useState(false)
+  const [healthChecks, setHealthChecks] = useState({}) // cid -> { status, latency, checking }
 
   // Verified users can access all channels, others see only isFree channels unlocked
   const isVerifiedUser = user?.is_verified
@@ -466,7 +485,38 @@ export default function AnointedIPTV() {
     setAllChannels(withMockHealth(BUILTIN_CHANNELS))
   }, [])
 
+  // Load any previously-saved shared/imported channels (best-effort).
+  useEffect(() => {
+    fetch("/api/shared-channels")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.channels?.length) {
+          setImportedChannels((prev) => {
+            const have = new Set(prev.map((c) => c.cid))
+            const fresh = withMockHealth(d.channels).filter((c) => !have.has(c.cid))
+            return [...prev, ...fresh]
+          })
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Hydrate the watchlist: from the account when signed in, else from localStorage.
+  useEffect(() => {
+    if (user) {
+      fetchWatchlist().then((ids) => {
+        if (ids) setWatchlist(ids)
+      })
+    } else {
+      try {
+        const saved = JSON.parse(localStorage.getItem("iptv_watchlist") || "[]")
+        if (Array.isArray(saved)) setWatchlist(saved)
+      } catch {}
+    }
+  }, [user])
+
   const featured = getFeatured()
+  const featuredCid = stableChannelId(featured)
   const displayChannels = [...allChannels, ...importedChannels]
   const seen = new Set()
   const uniqueChannels = displayChannels.filter((c) => {
@@ -492,9 +542,52 @@ export default function AnointedIPTV() {
     return acc
   }, {})
 
-  const toggleWatchlist = useCallback((id) => {
-    setWatchlist((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]))
+  const toggleWatchlist = useCallback(
+    (cid) => {
+      if (!cid) return
+      setWatchlist((w) => {
+        const next = toggleId(w, cid)
+        const action = next.includes(cid) ? "add" : "remove"
+        if (user) persistToggle(cid, action)
+        else {
+          try {
+            localStorage.setItem("iptv_watchlist", JSON.stringify(next))
+          } catch {}
+        }
+        return next
+      })
+    },
+    [user],
+  )
+
+  const runHealthCheck = useCallback(async (channel) => {
+    const cid = channel.cid ?? stableChannelId(channel)
+    setHealthChecks((h) => ({ ...h, [cid]: { ...h[cid], checking: true } }))
+    try {
+      const res = await fetch("/api/health-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ streamUrl: channel.url }),
+      })
+      const data = await res.json()
+      setHealthChecks((h) => ({
+        ...h,
+        [cid]: { status: data.status, latency: data.latency, checking: false, real: true },
+      }))
+    } catch {
+      setHealthChecks((h) => ({ ...h, [cid]: { status: "unknown", latency: null, checking: false, real: true } }))
+    }
   }, [])
+
+  const handleResendVerification = useCallback(async () => {
+    setResendState("sending")
+    try {
+      await resendVerification()
+      setResendState("sent")
+    } catch {
+      setResendState("error")
+    }
+  }, [resendVerification])
 
   const handleImport = async () => {
     if (!m3uUrl && !m3uContent) {
@@ -513,10 +606,20 @@ export default function AnointedIPTV() {
       if (!res.ok) throw new Error(data.error)
 
       const withHealth = withMockHealth(
-        data.channels.map((c, i) => ({ ...c, id: `imported_${i}_${Date.now()}` })),
+        data.channels.map((c) => ({ ...c, id: stableChannelId(c) })),
       )
-      setImportedChannels((prev) => [...prev, ...withHealth])
+      setImportedChannels((prev) => {
+        const have = new Set(prev.map((c) => c.cid))
+        return [...prev, ...withHealth.filter((c) => !have.has(c.cid))]
+      })
       setImportMsg({ type: "success", text: `Loaded ${data.count} channels from playlist.` })
+
+      // Best-effort persistence so imports survive a refresh (silent if Supabase unset).
+      fetch("/api/save-channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channels: data.channels, sourceUrl: m3uUrl || null }),
+      }).catch(() => {})
 
       setTimeout(() => {
         setShowImport(false)
@@ -718,6 +821,38 @@ export default function AnointedIPTV() {
         </AnimatePresence>
       </nav>
 
+      {/* ── UNVERIFIED EMAIL BANNER ──────────────────────────────────── */}
+      {user && !user.is_verified && (
+        <div className="pt-16">
+          <div className="border-b border-amber-500/20 bg-amber-500/10">
+            <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+              <div className="flex items-start gap-2 text-xs text-amber-200">
+                <AlertTriangle className="mt-0.5 size-4 flex-shrink-0" aria-hidden="true" />
+                <span>
+                  Verify your email to unlock all channels.{" "}
+                  <span className="text-amber-200/70">
+                    Demo — the email is sent via an external service and may not always arrive.
+                  </span>
+                </span>
+              </div>
+              <button
+                onClick={handleResendVerification}
+                disabled={resendState === "sending" || resendState === "sent"}
+                className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-70"
+              >
+                {resendState === "sending"
+                  ? "Sending…"
+                  : resendState === "sent"
+                  ? "Email sent ✓"
+                  : resendState === "error"
+                  ? "Failed — retry"
+                  : "Resend verification email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── LOCKED CHANNEL MODAL ─────────────────────────────────────── */}
       <AnimatePresence>
         {showLockedModal && (
@@ -738,12 +873,13 @@ export default function AnointedIPTV() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
                 <Lock className="size-8 text-amber-400" />
               </div>
-              <h2 className="mt-4 text-2xl font-bold text-foreground">Members Only Channel</h2>
+              <h2 className="mt-4 text-2xl font-bold text-foreground">Verified Members Only — Free</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {user && !user.is_verified
                   ? "Your account isn't verified yet. Check your email and click the verification link to unlock all channels."
-                  : "Sign up for a free account to unlock 60+ live channels, including news, documentaries, music, kids' shows and more."}
+                  : "Create a free account and verify your email to unlock 60+ live channels — news, documentaries, music, kids' shows and more."}
               </p>
+              <DemoNotice k="payments" className="mt-4 text-left" />
               <div className="mt-6 flex flex-col gap-3">
                 {user && !user.is_verified ? (
                   <button
@@ -801,6 +937,8 @@ export default function AnointedIPTV() {
                 Paste a public M3U playlist URL or the raw content. Channels load instantly into
                 the browse view.
               </p>
+
+              <DemoNotice k="import" className="mt-4" />
 
               <div className="mt-5 space-y-4">
                 <div>
@@ -879,7 +1017,7 @@ export default function AnointedIPTV() {
         channel={playing}
         onClose={() => setPlaying(null)}
         onToggleWatchlist={toggleWatchlist}
-        isWatchlisted={playing ? watchlist.includes(playing.id) : false}
+        isWatchlisted={playing ? watchlist.includes(playing.cid ?? stableChannelId(playing)) : false}
       />
 
       {/* ── BROWSE ──────────────────────────────────────────────────── */}
@@ -913,6 +1051,7 @@ export default function AnointedIPTV() {
                   <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                     {featured.desc}
                   </p>
+                  <DemoNotice k="epg" className="mt-5 max-w-md" />
                   <div className="mt-8 flex flex-wrap gap-3">
                     <button
                       onClick={() => handlePlayChannel(allChannels.find((c) => c.url) || allChannels[0])}
@@ -921,15 +1060,15 @@ export default function AnointedIPTV() {
                       <Play className="size-4 fill-white" /> Watch Now
                     </button>
                     <button
-                      onClick={() => toggleWatchlist(featured.id)}
+                      onClick={() => toggleWatchlist(featuredCid)}
                       className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted px-6 py-3 text-sm font-bold text-foreground hover:bg-accent"
                     >
                       <Heart
                         className={`size-4 ${
-                          watchlist.includes(featured.id) ? "fill-rose-400 text-rose-400" : ""
+                          watchlist.includes(featuredCid) ? "fill-rose-400 text-rose-400" : ""
                         }`}
                       />
-                      {watchlist.includes(featured.id) ? "Saved" : "Add to List"}
+                      {watchlist.includes(featuredCid) ? "Saved" : "Add to List"}
                     </button>
                   </div>
                 </motion.div>
@@ -993,7 +1132,7 @@ export default function AnointedIPTV() {
                       key={c.id || c.name}
                       channel={c}
                       onPlay={handlePlayChannel}
-                      isWatchlisted={watchlist.includes(c.id)}
+                      isWatchlisted={watchlist.includes(c.cid)}
                       onToggleWatchlist={toggleWatchlist}
                       isLocked={!c.isFree && !isVerifiedUser}
                     />
@@ -1020,7 +1159,7 @@ export default function AnointedIPTV() {
                         <ChannelCard
                           channel={c}
                           onPlay={handlePlayChannel}
-                          isWatchlisted={watchlist.includes(c.id)}
+                          isWatchlisted={watchlist.includes(c.cid)}
                           onToggleWatchlist={toggleWatchlist}
                         />
                       </div>
@@ -1044,13 +1183,14 @@ export default function AnointedIPTV() {
             </span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {uniqueChannels.filter((c) => watchlist.includes(c.id)).length} channels saved
+            {uniqueChannels.filter((c) => watchlist.includes(c.cid)).length} channels saved
           </p>
+          {!user && <DemoNotice k="watchlist" className="mt-4 max-w-xl" />}
 
-          {uniqueChannels.filter((c) => watchlist.includes(c.id)).length > 0 ? (
+          {uniqueChannels.filter((c) => watchlist.includes(c.cid)).length > 0 ? (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {uniqueChannels
-                .filter((c) => watchlist.includes(c.id))
+                .filter((c) => watchlist.includes(c.cid))
                 .map((c) => (
                   <ChannelCard
                     key={c.id}
@@ -1088,7 +1228,7 @@ export default function AnointedIPTV() {
                 </span>
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                {uniqueChannels.length} channels tracked · live health &amp; latency
+                {uniqueChannels.length} channels tracked · stream health &amp; latency (simulated)
               </p>
             </div>
             <div className="relative">
@@ -1101,6 +1241,8 @@ export default function AnointedIPTV() {
               />
             </div>
           </div>
+
+          <DemoNotice k="monitor" className="mt-6" />
 
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
@@ -1140,7 +1282,11 @@ export default function AnointedIPTV() {
                     .filter(
                       (c) => !monitorSearch || c.name.toLowerCase().includes(monitorSearch.toLowerCase()),
                     )
-                    .map((c) => (
+                    .map((c) => {
+                      const hc = healthChecks[c.cid]
+                      const status = hc?.status ?? c.status
+                      const latency = hc?.latency ?? c.latency
+                      return (
                       <tr key={c.id || c.name} className="hover:bg-muted/30">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -1158,24 +1304,25 @@ export default function AnointedIPTV() {
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">{c.group}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-2 text-xs font-semibold ${statusColor(c.status)}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${statusDot(c.status)}`} />
-                            {c.status}
+                          <span className={`inline-flex items-center gap-2 text-xs font-semibold ${statusColor(status)}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${statusDot(status)}`} />
+                            {status}
+                            {hc?.real && <span className="text-[9px] font-normal text-muted-foreground">(live)</span>}
                           </span>
                         </td>
                         <td
-                          className={`px-4 py-3 text-xs font-semibold ${
-                            c.latency
-                              ? c.latency < 200
+                          className={`px-4 py-3 text-xs font-semibold tabular-nums ${
+                            latency
+                              ? latency < 200
                                 ? "text-emerald-400"
                                 : "text-amber-400"
-                              : "text-rose-400"
+                              : "text-muted-foreground"
                           }`}
                         >
-                          {c.latency ? `${c.latency}ms` : "—"}
+                          {latency ? `${latency}ms` : "—"}
                         </td>
                         <td
-                          className={`px-4 py-3 text-xs font-semibold ${
+                          className={`px-4 py-3 text-xs font-semibold tabular-nums ${
                             c.uptime > 95
                               ? "text-emerald-400"
                               : c.uptime > 82
@@ -1186,15 +1333,27 @@ export default function AnointedIPTV() {
                           {c.uptime}%
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handlePlayChannel(c)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20"
-                          >
-                            <Play className="size-3 fill-rose-400" /> Watch
-                          </button>
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => runHealthCheck(c)}
+                              disabled={hc?.checking}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-60"
+                              title="Ping this stream for a real health status"
+                            >
+                              <RefreshCw className={`size-3 ${hc?.checking ? "animate-spin" : ""}`} />
+                              Run check
+                            </button>
+                            <button
+                              onClick={() => handlePlayChannel(c)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20"
+                            >
+                              <Play className="size-3 fill-rose-400" /> Watch
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                 </tbody>
               </table>
             </div>

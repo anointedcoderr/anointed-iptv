@@ -11,6 +11,9 @@ import {
   Loader2,
   ShieldCheck,
   ShieldOff,
+  Trash2,
+  BadgeCheck,
+  AlertCircle,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -21,6 +24,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState(null)
   const [users, setUsers] = useState([])
   const [loadingData, setLoadingData] = useState(true)
+  const [usersError, setUsersError] = useState("")
 
   useEffect(() => {
     if (authLoading) return
@@ -42,20 +46,38 @@ export default function AdminPage() {
 
   const loadUsers = async () => {
     setLoadingData(true)
+    setUsersError("")
     try {
       const res = await fetch("/api/admin/users")
       const data = await res.json()
       if (res.ok) setUsers(data.users || [])
-    } catch {} finally {
+      else setUsersError(data.error || "Failed to load users.")
+    } catch {
+      setUsersError("Network error while loading users.")
+    } finally {
       setLoadingData(false)
     }
   }
 
-  const toggleAdmin = async (userId, makeAdmin) => {
+  const patchUser = async (userId, patch) => {
     await fetch("/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, is_admin: makeAdmin }),
+      body: JSON.stringify({ userId, ...patch }),
+    })
+    loadUsers()
+    loadStats()
+  }
+
+  const toggleAdmin = (userId, makeAdmin) => patchUser(userId, { is_admin: makeAdmin })
+  const toggleVerified = (userId, makeVerified) => patchUser(userId, { is_verified: makeVerified })
+
+  const removeUser = async (userId) => {
+    if (!window.confirm("Delete this user permanently? This cannot be undone.")) return
+    await fetch("/api/admin/users", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
     })
     loadUsers()
     loadStats()
@@ -136,6 +158,22 @@ export default function AdminPage() {
               <div className="py-16 text-center">
                 <Loader2 className="mx-auto size-8 animate-spin text-muted-foreground" />
               </div>
+            ) : usersError ? (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 py-16 text-center">
+                <AlertCircle className="size-8 text-rose-400" />
+                <p className="text-sm text-rose-300">{usersError}</p>
+                <button
+                  onClick={loadUsers}
+                  className="rounded-lg border border-border bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-2xl border border-border py-16 text-center">
+                <Users className="size-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No users yet.</p>
+              </div>
             ) : (
               <div className="overflow-hidden rounded-2xl border border-border">
                 <div className="overflow-x-auto">
@@ -179,20 +217,38 @@ export default function AdminPage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             {u.id !== user.id && (
-                              <button
-                                onClick={() => toggleAdmin(u.id, !u.is_admin)}
-                                className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                                  u.is_admin
-                                    ? "border border-amber-500/30 bg-amber-500/10 text-amber-400"
-                                    : "border border-border bg-muted text-muted-foreground hover:text-foreground"
-                                }`}
-                              >
-                                {u.is_admin ? (
-                                  <><ShieldOff className="size-3" /> Demote</>
-                                ) : (
-                                  <><ShieldCheck className="size-3" /> Make Admin</>
+                              <div className="inline-flex items-center justify-end gap-1.5">
+                                {!u.is_verified && (
+                                  <button
+                                    onClick={() => toggleVerified(u.id, true)}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20"
+                                    title="Manually verify this user"
+                                  >
+                                    <BadgeCheck className="size-3" /> Verify
+                                  </button>
                                 )}
-                              </button>
+                                <button
+                                  onClick={() => toggleAdmin(u.id, !u.is_admin)}
+                                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                                    u.is_admin
+                                      ? "border border-amber-500/30 bg-amber-500/10 text-amber-400"
+                                      : "border border-border bg-muted text-muted-foreground hover:text-foreground"
+                                  }`}
+                                >
+                                  {u.is_admin ? (
+                                    <><ShieldOff className="size-3" /> Demote</>
+                                  ) : (
+                                    <><ShieldCheck className="size-3" /> Make Admin</>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => removeUser(u.id)}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20"
+                                  title="Delete this user"
+                                >
+                                  <Trash2 className="size-3" /> Remove
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>

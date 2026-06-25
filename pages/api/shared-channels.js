@@ -1,4 +1,5 @@
 import { supabase } from "../../lib/supabase";
+import { stableChannelId } from "../../lib/channel-id";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
@@ -25,8 +26,8 @@ export default async function handler(req, res) {
       from += pageSize;
     }
 
-    const channels = allData.map((c, i) => ({
-      id: `shared_${i}`,
+    const channels = allData.map((c) => ({
+      id: stableChannelId({ url: c.stream_url || "", name: c.name }),
       name: c.name,
       url: c.stream_url || "",
       group: c.group_name || "General",

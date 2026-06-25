@@ -2,11 +2,12 @@ import { useState } from "react"
 import { useAuth } from "../lib/auth-context"
 import { useRouter } from "next/router"
 import { motion } from "framer-motion"
-import { Mail, Lock, User, ArrowRight, Loader2, CheckCircle } from "lucide-react"
+import { Mail, Lock, User, ArrowRight, Loader2, CheckCircle, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import DemoNotice from "../components/DemoNotice"
 
 export default function SignupPage() {
-  const { signup } = useAuth()
+  const { signup, resendVerification } = useAuth()
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -14,6 +15,17 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [resendState, setResendState] = useState(null) // null | "sending" | "sent" | "error"
+
+  const handleResend = async () => {
+    setResendState("sending")
+    try {
+      await resendVerification()
+      setResendState("sent")
+    } catch {
+      setResendState("error")
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -45,12 +57,29 @@ export default function SignupPage() {
             We've sent a verification link to <strong className="text-foreground">{email}</strong>.
             Click it to unlock all channels. Check your spam folder if you don't see it.
           </p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white hover:opacity-90"
-          >
-            Browse Free Channels <ArrowRight className="size-4" />
-          </button>
+          <DemoNotice k="verification" className="mt-4 text-left" />
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              onClick={() => router.push("/")}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white hover:opacity-90"
+            >
+              Browse Free Channels <ArrowRight className="size-4" />
+            </button>
+            <button
+              onClick={handleResend}
+              disabled={resendState === "sending" || resendState === "sent"}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-6 py-3 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-70"
+            >
+              <RefreshCw className={`size-4 ${resendState === "sending" ? "animate-spin" : ""}`} />
+              {resendState === "sending"
+                ? "Sending…"
+                : resendState === "sent"
+                ? "Verification email re-sent ✓"
+                : resendState === "error"
+                ? "Couldn't resend — try again"
+                : "Resend verification email"}
+            </button>
+          </div>
         </motion.div>
       </div>
     )

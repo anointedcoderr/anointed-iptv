@@ -51,10 +51,17 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  const resendVerification = async () => {
+    const res = await fetch("/api/auth/resend-verification", { method: "POST" })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "Could not resend verification email.")
+    return data
+  }
+
   const refresh = fetchUser
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, refresh, resendVerification }}>
       {children}
     </AuthContext.Provider>
   )

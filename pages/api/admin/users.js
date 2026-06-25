@@ -1,22 +1,45 @@
-import { createClient } from '@supabase/supabase-js';
+import { getUserFromReq } from "../../../lib/auth"
+import { adminSupabase } from "../../../lib/admin-supabase"
 
-function getSupabase() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-}
-
+// Admin user management. Cookie-JWT auth (matches /api/admin/stats and the UI).
+// GET = list, PATCH = update is_admin/is_verified, DELETE = remove.
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (req.headers['x-admin-secret'] !== process.env.ADMIN_API_SECRET) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const { action, userId, data } = req.body;
-    const supabase = getSupabase();
-    if (action === 'list') {
-      const result = await supabase.from('iptv_users').select('id, email, name, is_admin, is_verified, created_at').order('created_at', { ascending: false }).limit(500);
-      if (result.error) return res.status(500).json({ error: result.error.message });
-      return res.json({ users: (result.data || []).map(u => ({ id: u.id, email: u.email || '', username: u.name || '', role: u.is_admin ? 'admin' : 'user', status: u.is_verified ? 'active' : 'inactive', created_at: u.created_at || '' })) });
+  const session = getUserFromReq(req)
+  if (!session?.isAdmin) return res.status(403).json({ error: "Admin access required." })
+  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+
+  if (req.method === "GET") {
+    const { data, error } = await adminSupabase
+      .from("iptv_users")
+      .select("id, email, name, is_admin, is_verified, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500)
+    if (error) return res.status(500).json({ error: error.message })
+    return res.status(200).json({ users: data || [] })
+  }
+
+  if (req.method === "PATCH") {
+    const { userId, is_admin, is_verified } = req.body || {}
+    if (!userId) return res.status(400).json({ error: "userId required" })
+    const patch = {}
+    if (typeof is_admin === "boolean") patch.is_admin = is_admin
+    if (typeof is_verified === "boolean") patch.is_verified = is_verified
+    if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Nothing to update" })
+    const { error } = await adminSupabase.from("iptv_users").update(patch).eq("id", userId)
+    if (error) return res.status(500).json({ error: error.message })
+    return res.status(200).json({ success: true })
+  }
+
+  if (req.method === "DELETE") {
+    const { userId } = req.body || {}
+    if (!userId) return res.status(400).json({ error: "userId required" })
+    if (String(userId) === String(session.id)) {
+      return res.status(400).json({ error: "You cannot delete your own account here." })
     }
-    if (action === 'update_role' && userId && data?.role) { await supabase.from('iptv_users').update({ is_admin: data.role === 'admin' }).eq('id', userId); return res.json({ success: true }); }
-    if (action === 'remove' && userId) { await supabase.from('iptv_users').delete().eq('id', userId); return res.json({ success: true }); }
-    return res.status(400).json({ error: 'Invalid action' });
-  } catch (error) { console.error('Admin error:', error); return res.status(500).json({ error: 'Server error' }); }
+    const { error } = await adminSupabase.from("iptv_users").delete().eq("id", userId)
+    if (error) return res.status(500).json({ error: error.message })
+    return res.status(200).json({ success: true })
+  }
+
+  return res.status(405).json({ error: "Method not allowed" })
 }
