@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=Geist+Mono:wght@100..900&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
@@ -22,8 +22,13 @@
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.55 0.24 285);
   --radius: 0.625rem;
+
+  /* Anointed Coder brand (anointedcoder.com) */
+  --brand-violet: #6d35ff;
+  --brand-cyan: #2ebfff;
+  --brand-grad: linear-gradient(135deg, #6d35ff 0%, #2ebfff 100%);
 }
 
 .dark {
@@ -45,11 +50,11 @@
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --ring: oklch(0.62 0.21 285);
 }
 
 @theme inline {
-  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Manrope', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -88,18 +93,33 @@
   }
 }
 
-/* Glass card utility — mirrors anointed-coder-website */
+/* Glass card utility — mirrors anointedcoder.com brand glassmorphism */
 .glass-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
 
 .glass-card:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(244, 63, 94, 0.35);
+  border-color: rgba(109, 53, 255, 0.35);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 0 24px rgba(109, 53, 255, 0.18);
+}
+
+/* Brand violet glow for raised/active elements */
+.glow-violet {
+  box-shadow: 0 0 20px rgba(109, 53, 255, 0.35), 0 22px 60px rgba(109, 53, 255, 0.16);
+}
+
+/* Signature faint violet grid background overlay */
+.bg-violet-grid {
+  background-image:
+    linear-gradient(rgba(109, 53, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(109, 53, 255, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
 }
 
 /* Hide scrollbar utility for horizontal scrollers */
@@ -116,3 +136,36 @@
   to { transform: rotate(360deg); }
 }
 .animate-spin-loader { animation: spin-loader 0.8s linear infinite; }
+
+/* Skeleton shimmer for branded loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(109, 53, 255, 0.10) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid var(--brand-violet);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

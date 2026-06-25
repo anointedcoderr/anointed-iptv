@@ -2,11 +2,12 @@ import { useState } from "react"
 import { useAuth } from "../lib/auth-context"
 import { useRouter } from "next/router"
 import { motion } from "framer-motion"
-import { Mail, Lock, User, ArrowRight, Loader2, CheckCircle } from "lucide-react"
+import { Mail, Lock, User, ArrowRight, Loader2, CheckCircle, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import DemoNotice from "../components/DemoNotice"
 
 export default function SignupPage() {
-  const { signup } = useAuth()
+  const { signup, resendVerification } = useAuth()
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -14,6 +15,17 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [resendState, setResendState] = useState(null) // null | "sending" | "sent" | "error"
+
+  const handleResend = async () => {
+    setResendState("sending")
+    try {
+      await resendVerification()
+      setResendState("sent")
+    } catch {
+      setResendState("error")
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -45,12 +57,29 @@ export default function SignupPage() {
             We've sent a verification link to <strong className="text-foreground">{email}</strong>.
             Click it to unlock all channels. Check your spam folder if you don't see it.
           </p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white hover:opacity-90"
-          >
-            Browse Free Channels <ArrowRight className="size-4" />
-          </button>
+          <DemoNotice k="verification" className="mt-4 text-left" />
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              onClick={() => router.push("/")}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white hover:opacity-90"
+            >
+              Browse Free Channels <ArrowRight className="size-4" />
+            </button>
+            <button
+              onClick={handleResend}
+              disabled={resendState === "sending" || resendState === "sent"}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-6 py-3 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-70"
+            >
+              <RefreshCw className={`size-4 ${resendState === "sending" ? "animate-spin" : ""}`} />
+              {resendState === "sending"
+                ? "Sending…"
+                : resendState === "sent"
+                ? "Verification email re-sent ✓"
+                : resendState === "error"
+                ? "Couldn't resend — try again"
+                : "Resend verification email"}
+            </button>
+          </div>
         </motion.div>
       </div>
     )
@@ -69,7 +98,7 @@ export default function SignupPage() {
             <img src="/images/logo.png" alt="Anointed Coder" className="h-full w-full object-contain" />
           </div>
           <span className="text-lg font-bold text-foreground">
-            Anointed <span className="bg-gradient-to-r from-rose-500 to-orange-400 bg-clip-text text-transparent">IPTV</span>
+            Anointed <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">IPTV</span>
           </span>
         </div>
 
@@ -83,10 +112,12 @@ export default function SignupPage() {
             <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
+              aria-label="Name (optional)"
+              autoComplete="name"
               placeholder="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+              className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
             />
           </div>
           <div className="relative">
@@ -94,10 +125,12 @@ export default function SignupPage() {
             <input
               type="email"
               required
+              aria-label="Email address"
+              autoComplete="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+              className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
             />
           </div>
           <div className="relative">
@@ -106,15 +139,17 @@ export default function SignupPage() {
               type="password"
               required
               minLength={6}
+              aria-label="Password (6+ characters)"
+              autoComplete="new-password"
               placeholder="Password (6+ characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+              className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
             />
           </div>
 
           {error && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+            <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
               {error}
             </div>
           )}
@@ -122,7 +157,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] py-3 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90 disabled:opacity-60"
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
             {loading ? "Creating account…" : "Sign Up"}
@@ -131,7 +166,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-rose-400 hover:text-rose-300">
+          <Link href="/login" className="font-semibold text-[#8b5cf6] hover:text-[#a78bfa]">
             Log in
           </Link>
         </p>

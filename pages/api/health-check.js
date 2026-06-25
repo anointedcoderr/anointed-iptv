@@ -53,10 +53,8 @@ async function pingStream(url) {
     if (err.name === "AbortError") {
       return { status: "offline", latency: null, error: "Timeout" };
     }
-    // CORS errors usually mean the stream exists but blocks direct pings
-    if (err.message.includes("fetch")) {
-      return { status: "online", latency: null, corsBlocked: true };
-    }
-    return { status: "offline", latency: null, error: err.message };
+    // A thrown fetch (CORS, DNS, network) means we could NOT verify the stream.
+    // Never assume it's online — report "unknown" so real outages aren't masked.
+    return { status: "unknown", latency: null, error: err.message };
   }
 }

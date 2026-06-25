@@ -20,10 +20,13 @@ create index if not exists idx_iptv_users_verify_token on iptv_users(verify_toke
 create table if not exists iptv_user_watchlist (
   id          bigserial primary key,
   user_id     bigint references iptv_users(id) on delete cascade,
-  channel_id  integer not null,
+  channel_id  text not null,
   added_at    timestamptz default now(),
   unique(user_id, channel_id)
 );
+
+-- If the table already exists with an integer channel_id, widen it to text:
+-- alter table iptv_user_watchlist alter column channel_id type text using channel_id::text;
 
 create index if not exists idx_iptv_watchlist_user on iptv_user_watchlist(user_id);
 

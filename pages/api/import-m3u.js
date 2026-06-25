@@ -58,8 +58,8 @@ export default async function handler(req, res) {
     const channels = parseM3U(text);
     if (!channels.length) return res.status(400).json({ error: "No channels found in this playlist." });
 
-    // Return channels immediately to the client
-    // Client will separately call /api/save-channels to persist them
+    // Return channels immediately to the client. The client persists them
+    // by calling /api/save-channels (best-effort) after a successful import.
     return res.status(200).json({
       channels,
       count: channels.length,

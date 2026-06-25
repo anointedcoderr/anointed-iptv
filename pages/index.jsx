@@ -17,10 +17,30 @@ import {
   LogIn,
   LogOut,
   UserPlus,
+  RefreshCw,
+  AlertTriangle,
+  Maximize,
+  PictureInPicture2,
+  Captions,
+  Volume2,
+  Gauge,
+  History,
+  CalendarDays,
+  Clapperboard,
+  Film,
+  UserCog,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/router"
 import { BUILTIN_CHANNELS, getFeatured } from "../lib/channels"
 import { useAuth } from "../lib/auth-context"
+import { stableChannelId } from "../lib/channel-id"
+import { toggleId, fetchWatchlist, persistToggle } from "../lib/watchlist"
+import { saveProgress, getProgress, clearProgress, getProgressList } from "../lib/progress"
+import { useDialogA11y } from "../lib/use-dialog-a11y"
+import DemoNotice from "../components/DemoNotice"
+import EpgGuide from "../components/EpgGuide"
+import Catalog from "../components/Catalog"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -29,14 +49,23 @@ const statusColor = (s) =>
     ? "text-emerald-400"
     : s === "degraded"
     ? "text-amber-400"
+    : s === "unknown"
+    ? "text-muted-foreground"
     : "text-rose-400"
 
 const statusDot = (s) =>
-  s === "online" ? "bg-emerald-400" : s === "degraded" ? "bg-amber-400" : "bg-rose-400"
+  s === "online"
+    ? "bg-emerald-400"
+    : s === "degraded"
+    ? "bg-amber-400"
+    : s === "unknown"
+    ? "bg-muted-foreground"
+    : "bg-rose-400"
 
 const withMockHealth = (channels) =>
   channels.map((c) => ({
     ...c,
+    cid: stableChannelId(c),
     status: Math.random() > 0.12 ? "online" : Math.random() > 0.5 ? "degraded" : "offline",
     latency: Math.floor(Math.random() * 300) + 60,
     uptime: parseFloat((Math.random() * 15 + 84).toFixed(1)),
@@ -59,7 +88,7 @@ function ChannelLogo({ logo, color, name, size = "md" }) {
   const shortText = logo && !logo.startsWith("http") ? logo : fallback
 
   const sizes = {
-    sm: "w-8 h-8 text-[9px] rounded-md",
+    sm: "w-8 h-8 text-[11px] rounded-md",
     md: "w-14 h-14 text-xs rounded-xl",
     lg: "w-16 h-16 text-sm rounded-2xl",
   }
@@ -89,11 +118,55 @@ function ChannelLogo({ logo, color, name, size = "md" }) {
 
 // ─── HLS Player Modal ────────────────────────────────────────────────────────
 
+function TrackSelect({ icon: Icon, label, value, onChange, options }) {
+  if (!options || options.length <= 1) return null
+  return (
+    <label className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground">
+      <Icon className="size-3.5" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="bg-transparent text-foreground focus:outline-none"
+        aria-label={label}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="bg-card text-foreground">
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
   const videoRef = useRef(null)
   const hlsRef = useRef(null)
+  const lastSaveRef = useRef(0)
   const [loading, setLoading] = useState(true)
   const [playerError, setPlayerError] = useState(null)
+  const [levels, setLevels] = useState([])
+  const [currentLevel, setCurrentLevel] = useState(-1)
+  const [audioTracks, setAudioTracks] = useState([])
+  const [currentAudio, setCurrentAudio] = useState(-1)
+  const [subtitleTracks, setSubtitleTracks] = useState([])
+  const [currentSubtitle, setCurrentSubtitle] = useState(-1)
+  const [canPiP, setCanPiP] = useState(false)
+  const [resumed, setResumed] = useState(null)
+  const dlg = useDialogA11y(!!channel, onClose)
+
+  const cid = channel ? (channel.cid ?? stableChannelId(channel)) : null
+
+  // Persist playback position for "Continue watching" (VOD-style finite streams).
+  const handleTimeUpdate = useCallback(() => {
+    const v = videoRef.current
+    if (!v || !cid || !isFinite(v.duration)) return
+    const now = Date.now()
+    if (now - lastSaveRef.current < 5000) return
+    lastSaveRef.current = now
+    saveProgress(cid, v.currentTime, v.duration, now)
+  }, [cid])
 
   useEffect(() => {
     if (!channel?.url || !videoRef.current) {
@@ -102,12 +175,39 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
     }
     setLoading(true)
     setPlayerError(null)
+    setLevels([])
+    setAudioTracks([])
+    setSubtitleTracks([])
+    setCurrentLevel(-1)
     const video = videoRef.current
+    if (typeof document !== "undefined") {
+      setCanPiP(!!document.pictureInPictureEnabled)
+    }
+
+    const saved = cid ? getProgress(cid) : null
+    const seekToSaved = () => {
+      if (saved?.position && isFinite(video.duration) && video.duration > 0) {
+        video.currentTime = Math.min(saved.position, video.duration - 5)
+        setResumed(Math.floor(saved.position))
+      }
+    }
 
     const tryPlay = async () => {
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      const isHls = /\.m3u8(\?|$)/i.test(channel.url)
+      if (!isHls) {
+        // Progressive file (MP4/WebM, e.g. VOD) — play directly.
         video.src = channel.url
         video.load()
+        video.addEventListener("loadedmetadata", seekToSaved, { once: true })
+        setLoading(false)
+        video.play().catch(() => {})
+        return
+      }
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // Native HLS (Safari/iOS) — track menus handled by the OS player.
+        video.src = channel.url
+        video.load()
+        video.addEventListener("loadedmetadata", seekToSaved, { once: true })
         setLoading(false)
         return
       }
@@ -118,16 +218,29 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
           hlsRef.current = hls
           hls.loadSource(channel.url)
           hls.attachMedia(video)
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
             setLoading(false)
+            setLevels(hls.levels || [])
+            setCurrentLevel(hls.currentLevel)
+            setAudioTracks(hls.audioTracks || [])
+            setCurrentAudio(hls.audioTrack)
+            setSubtitleTracks(hls.subtitleTracks || [])
+            setCurrentSubtitle(hls.subtitleTrack)
+            seekToSaved()
             video.play().catch(() => {})
           })
+          hls.on(Hls.Events.LEVEL_SWITCHED, (_, d) => setCurrentLevel(d.level))
+          hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_, d) => setCurrentAudio(d.id))
+          hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, (_, d) => setCurrentSubtitle(d.id))
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
               setPlayerError("Stream unavailable or blocked by CORS.")
               setLoading(false)
             }
           })
+        } else {
+          setPlayerError("Your browser can't play this stream.")
+          setLoading(false)
         }
       } catch {
         setPlayerError("Could not load player.")
@@ -141,9 +254,48 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
         hlsRef.current = null
       }
     }
-  }, [channel?.url])
+  }, [channel?.url, cid])
+
+  const setQuality = (idx) => {
+    setCurrentLevel(idx)
+    if (hlsRef.current) hlsRef.current.currentLevel = idx
+  }
+  const setAudio = (id) => {
+    setCurrentAudio(id)
+    if (hlsRef.current) hlsRef.current.audioTrack = id
+  }
+  const setSubtitle = (id) => {
+    setCurrentSubtitle(id)
+    if (hlsRef.current) {
+      hlsRef.current.subtitleTrack = id
+      hlsRef.current.subtitleDisplay = id !== -1
+    }
+  }
+  const togglePiP = async () => {
+    const v = videoRef.current
+    if (!v) return
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture()
+      else await v.requestPictureInPicture()
+    } catch {}
+  }
+  const goFullscreen = () => {
+    const v = videoRef.current
+    if (v?.requestFullscreen) v.requestFullscreen().catch(() => {})
+    else if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen()
+  }
 
   if (!channel) return null
+
+  const qualityOptions = [
+    { value: -1, label: "Auto" },
+    ...levels.map((l, i) => ({ value: i, label: l.height ? `${l.height}p` : `${Math.round((l.bitrate || 0) / 1000)}k` })),
+  ]
+  const audioOptions = audioTracks.map((t) => ({ value: t.id, label: t.name || t.lang || `Audio ${t.id + 1}` }))
+  const subtitleOptions = [
+    { value: -1, label: "Off" },
+    ...subtitleTracks.map((t) => ({ value: t.id, label: t.name || t.lang || `Sub ${t.id + 1}` })),
+  ]
 
   return (
     <AnimatePresence>
@@ -156,12 +308,18 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/95 backdrop-blur-xl"
       >
         <motion.div
+          ref={dlg.ref}
+          onKeyDown={dlg.onKeyDown}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${channel.name} player`}
+          tabIndex={-1}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.25 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-4xl"
+          className="w-full max-w-4xl focus:outline-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
@@ -171,7 +329,7 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground">{channel.name}</h2>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {channel.status === "online" && (
-                    <span className="inline-flex items-center gap-1 rounded bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white animate-pulse-live">
+                    <span className="inline-flex items-center gap-1 rounded bg-[#6d35ff] px-2 py-0.5 text-[11px] font-bold text-white animate-pulse-live">
                       ● LIVE
                     </span>
                   )}
@@ -183,13 +341,14 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => onToggleWatchlist(channel.id)}
+                onClick={() => onToggleWatchlist(channel.cid ?? stableChannelId(channel))}
                 className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
                   isWatchlisted
                     ? "border-rose-500/50 bg-rose-500/10 text-rose-400"
                     : "border-border bg-muted text-muted-foreground hover:text-foreground"
                 }`}
-                aria-label="Toggle watchlist"
+                aria-label={`${isWatchlisted ? "Remove" : "Add"} ${channel.name} ${isWatchlisted ? "from" : "to"} watchlist`}
+                aria-pressed={isWatchlisted}
               >
                 <Heart className={`size-4 ${isWatchlisted ? "fill-rose-400" : ""}`} />
               </button>
@@ -212,12 +371,14 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
                   controls
                   autoPlay
                   playsInline
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={() => cid && clearProgress(cid)}
                   className="h-full w-full object-contain"
                   style={{ display: loading ? "none" : "block" }}
                 />
                 {loading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-background to-black">
-                    <Loader2 className="size-12 animate-spin text-rose-500" />
+                    <Loader2 className="size-12 animate-spin text-[#6d35ff]" />
                     <div className="text-sm text-muted-foreground">Connecting to stream…</div>
                   </div>
                 )}
@@ -233,16 +394,48 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
             )}
           </div>
 
+          {/* Player controls — quality / audio / subtitles / PiP / fullscreen */}
+          {channel.url && !playerError && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <TrackSelect icon={Gauge} label="Stream quality" value={currentLevel} onChange={setQuality} options={qualityOptions} />
+              <TrackSelect icon={Volume2} label="Audio track" value={currentAudio} onChange={setAudio} options={audioOptions} />
+              <TrackSelect icon={Captions} label="Subtitles" value={currentSubtitle} onChange={setSubtitle} options={subtitleOptions} />
+              {resumed != null && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
+                  <History className="size-3.5" aria-hidden="true" /> Resumed
+                </span>
+              )}
+              <div className="ml-auto flex items-center gap-2">
+                {canPiP && (
+                  <button
+                    onClick={togglePiP}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground"
+                    aria-label="Picture in picture"
+                  >
+                    <PictureInPicture2 className="size-4" />
+                  </button>
+                )}
+                <button
+                  onClick={goFullscreen}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground"
+                  aria-label="Fullscreen"
+                >
+                  <Maximize className="size-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Stats row */}
           <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
               { label: "STATUS", value: channel.status?.toUpperCase(), tone: statusColor(channel.status) },
               { label: "LATENCY", value: channel.latency ? `${channel.latency}ms` : "—", tone: "text-emerald-400" },
-              { label: "UPTIME", value: `${channel.uptime}%`, tone: "text-fuchsia-400" },
+              { label: "UPTIME", value: `${channel.uptime}%`, tone: "text-foreground" },
               { label: "GROUP", value: channel.group, tone: "text-foreground" },
             ].map((s) => (
               <div key={s.label}>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {s.label}
                 </div>
                 <div className={`text-sm font-semibold ${s.tone}`}>{s.value}</div>
@@ -285,10 +478,11 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onToggleWatchlist(channel.id)
+            onToggleWatchlist(channel.cid ?? stableChannelId(channel))
           }}
-          className="absolute left-2 top-2 rounded-md p-1 transition-colors"
-          aria-label="Toggle watchlist"
+          className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-md transition-colors"
+          aria-label={`${isWatchlisted ? "Remove" : "Add"} ${channel.name} ${isWatchlisted ? "from" : "to"} watchlist`}
+          aria-pressed={isWatchlisted}
         >
           <Heart
             className={`size-4 ${
@@ -299,15 +493,15 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
 
         {/* LIVE badge */}
         {channel.status === "online" && !isLocked && (
-          <div className="absolute bottom-2 left-2 rounded bg-rose-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
+          <div className="absolute bottom-2 left-2 rounded bg-[#6d35ff] px-1.5 py-0.5 text-[11px] font-bold text-white">
             LIVE
           </div>
         )}
 
         {/* Lock badge for non-free channels */}
         {isLocked && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-amber-600/90 px-1.5 py-0.5 text-[9px] font-bold text-white">
-            <Lock className="size-2.5" /> MEMBERS
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-amber-600/90 px-1.5 py-0.5 text-[11px] font-bold text-white">
+            <Lock className="size-2.5" /> VERIFIED
           </div>
         )}
 
@@ -318,7 +512,7 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
               <Lock className="size-4 text-white" />
             </div>
           ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-rose-600 to-orange-500 shadow-lg shadow-rose-500/50">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#6d35ff] to-[#2ebfff] shadow-lg shadow-[#6d35ff]/50">
               <Play className="size-4 fill-white text-white" />
             </div>
           )}
@@ -328,7 +522,7 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
       {/* Footer */}
       <div className="px-3 pb-3 pt-2.5">
         <div className="truncate text-sm font-semibold text-foreground">{channel.name}</div>
-        <div className="mt-0.5 flex items-center justify-between text-[10px]">
+        <div className="mt-0.5 flex items-center justify-between text-[11px]">
           <span className="text-muted-foreground">
             {channel.country} {channel.group}
           </span>
@@ -374,7 +568,7 @@ function ContactFooter() {
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
                 Anointed{" "}
-                <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
                   IPTV
                 </span>
               </span>
@@ -389,8 +583,9 @@ function ContactFooter() {
               >
                 Anointed Coder
               </a>{" "}
-              showcasing live HLS playback, watchlist persistence, M3U playlist import, and stream
-              health monitoring. Ships with free public test streams — fully legal demo content.
+              showcasing live HLS playback, account-saved watchlists, M3U playlist import, and
+              simulated stream-health monitoring. Ships with free public test streams — fully legal
+              demo content.
             </p>
           </div>
           <div>
@@ -406,7 +601,7 @@ function ContactFooter() {
                 href="https://anointedcoder.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90"
               >
                 Visit Anointed Coder <ExternalLink className="size-4" />
               </a>
@@ -419,8 +614,11 @@ function ContactFooter() {
             </div>
           </div>
         </div>
-        <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Anointed Coder. All rights reserved.
+        <div className="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-center text-xs text-muted-foreground">
+          <Link href="/pricing" className="font-semibold text-[#8b5cf6] hover:text-[#a78bfa]">
+            View plans &amp; pricing
+          </Link>
+          <span>© {new Date().getFullYear()} Anointed Coder. All rights reserved.</span>
         </div>
       </div>
     </footer>
@@ -429,26 +627,42 @@ function ContactFooter() {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+const NAV_VIEWS = ["Browse", "Guide", "Movies", "Series", "Watchlist", "Monitor"]
+
 export default function AnointedIPTV() {
-  const { user, logout } = useAuth()
+  const { user, logout, resendVerification } = useAuth()
+  const router = useRouter()
   const [allChannels, setAllChannels] = useState(BUILTIN_CHANNELS)
   const [importedChannels, setImportedChannels] = useState([])
   const [watchlist, setWatchlist] = useState([])
+  const [resendState, setResendState] = useState(null) // null | "sending" | "sent" | "error"
   const [playing, setPlaying] = useState(null)
   const [search, setSearch] = useState("")
   const [activeNav, setActiveNav] = useState("Browse")
   const [activeCategory, setActiveCategory] = useState("All")
   const [showImport, setShowImport] = useState(false)
+  const [importMode, setImportMode] = useState("m3u") // "m3u" | "xtream"
   const [m3uUrl, setM3uUrl] = useState("")
   const [m3uContent, setM3uContent] = useState("")
+  const [xtreamServer, setXtreamServer] = useState("")
+  const [xtreamUser, setXtreamUser] = useState("")
+  const [xtreamPass, setXtreamPass] = useState("")
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const [monitorSearch, setMonitorSearch] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLockedModal, setShowLockedModal] = useState(false)
+  const [healthChecks, setHealthChecks] = useState({}) // cid -> { status, latency, checking }
+  const [continueCids, setContinueCids] = useState([]) // continue-watching, newest first
+  const [visibleCount, setVisibleCount] = useState(60) // incremental render for large lists
 
   // Verified users can access all channels, others see only isFree channels unlocked
   const isVerifiedUser = user?.is_verified
+
+  const lockedDlg = useDialogA11y(showLockedModal, () => setShowLockedModal(false))
+  const importDlg = useDialogA11y(showImport, () => {
+    if (!importing) setShowImport(false)
+  })
 
   const handlePlayChannel = useCallback(
     (channel) => {
@@ -466,7 +680,67 @@ export default function AnointedIPTV() {
     setAllChannels(withMockHealth(BUILTIN_CHANNELS))
   }, [])
 
+  // Load any previously-saved shared/imported channels (best-effort).
+  useEffect(() => {
+    fetch("/api/shared-channels")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.channels?.length) {
+          setImportedChannels((prev) => {
+            const have = new Set(prev.map((c) => c.cid))
+            const fresh = withMockHealth(d.channels).filter((c) => !have.has(c.cid))
+            return [...prev, ...fresh]
+          })
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Continue-watching: refresh from localStorage on mount and whenever the player closes.
+  useEffect(() => {
+    if (!playing) setContinueCids(getProgressList().map((e) => e.cid))
+  }, [playing])
+
+  // Reset incremental rendering when the filter changes (keeps big lists fast).
+  useEffect(() => {
+    setVisibleCount(60)
+  }, [search, activeCategory])
+
+  // Sync the active view with the URL (?view=) so views are linkable + refresh-safe.
+  useEffect(() => {
+    const v = router.query.view
+    if (typeof v === "string" && NAV_VIEWS.includes(v)) setActiveNav(v)
+    else if (!v) setActiveNav("Browse")
+  }, [router.query.view])
+
+  const goNav = useCallback(
+    (name) => {
+      setActiveNav(name)
+      router.push(
+        name === "Browse" ? { pathname: "/" } : { pathname: "/", query: { view: name } },
+        undefined,
+        { shallow: true },
+      )
+    },
+    [router],
+  )
+
+  // Hydrate the watchlist: from the account when signed in, else from localStorage.
+  useEffect(() => {
+    if (user) {
+      fetchWatchlist().then((ids) => {
+        if (ids) setWatchlist(ids)
+      })
+    } else {
+      try {
+        const saved = JSON.parse(localStorage.getItem("iptv_watchlist") || "[]")
+        if (Array.isArray(saved)) setWatchlist(saved)
+      } catch {}
+    }
+  }, [user])
+
   const featured = getFeatured()
+  const featuredCid = stableChannelId(featured)
   const displayChannels = [...allChannels, ...importedChannels]
   const seen = new Set()
   const uniqueChannels = displayChannels.filter((c) => {
@@ -492,9 +766,66 @@ export default function AnointedIPTV() {
     return acc
   }, {})
 
-  const toggleWatchlist = useCallback((id) => {
-    setWatchlist((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]))
+  const toggleWatchlist = useCallback(
+    (cid) => {
+      if (!cid) return
+      setWatchlist((w) => {
+        const next = toggleId(w, cid)
+        const action = next.includes(cid) ? "add" : "remove"
+        if (user) persistToggle(cid, action)
+        else {
+          try {
+            localStorage.setItem("iptv_watchlist", JSON.stringify(next))
+          } catch {}
+        }
+        return next
+      })
+    },
+    [user],
+  )
+
+  const runHealthCheck = useCallback(async (channel) => {
+    const cid = channel.cid ?? stableChannelId(channel)
+    setHealthChecks((h) => ({ ...h, [cid]: { ...h[cid], checking: true } }))
+    try {
+      const res = await fetch("/api/health-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ streamUrl: channel.url }),
+      })
+      const data = await res.json()
+      setHealthChecks((h) => ({
+        ...h,
+        [cid]: { status: data.status, latency: data.latency, checking: false, real: true },
+      }))
+    } catch {
+      setHealthChecks((h) => ({ ...h, [cid]: { status: "unknown", latency: null, checking: false, real: true } }))
+    }
   }, [])
+
+  const handleResendVerification = useCallback(async () => {
+    setResendState("sending")
+    try {
+      await resendVerification()
+      setResendState("sent")
+    } catch {
+      setResendState("error")
+    }
+  }, [resendVerification])
+
+  const addImportedChannels = (channels, sourceUrl) => {
+    const withHealth = withMockHealth(channels.map((c) => ({ ...c, id: stableChannelId(c) })))
+    setImportedChannels((prev) => {
+      const have = new Set(prev.map((c) => c.cid))
+      return [...prev, ...withHealth.filter((c) => !have.has(c.cid))]
+    })
+    // Best-effort persistence so imports survive a refresh (silent if Supabase unset).
+    fetch("/api/save-channels", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channels, sourceUrl: sourceUrl || null }),
+    }).catch(() => {})
+  }
 
   const handleImport = async () => {
     if (!m3uUrl && !m3uContent) {
@@ -512,12 +843,8 @@ export default function AnointedIPTV() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      const withHealth = withMockHealth(
-        data.channels.map((c, i) => ({ ...c, id: `imported_${i}_${Date.now()}` })),
-      )
-      setImportedChannels((prev) => [...prev, ...withHealth])
+      addImportedChannels(data.channels, m3uUrl)
       setImportMsg({ type: "success", text: `Loaded ${data.count} channels from playlist.` })
-
       setTimeout(() => {
         setShowImport(false)
         setM3uUrl("")
@@ -530,14 +857,56 @@ export default function AnointedIPTV() {
     }
   }
 
+  const handleXtream = async () => {
+    if (!xtreamServer || !xtreamUser || !xtreamPass) {
+      setImportMsg({ type: "error", text: "Enter your server URL, username and password." })
+      return
+    }
+    setImporting(true)
+    setImportMsg(null)
+    try {
+      const res = await fetch("/api/xtream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ server: xtreamServer, username: xtreamUser, password: xtreamPass }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      addImportedChannels(data.channels, xtreamServer)
+      setImportMsg({ type: "success", text: `Connected — loaded ${data.count} live channels.` })
+      setTimeout(() => {
+        setShowImport(false)
+        setXtreamServer("")
+        setXtreamUser("")
+        setXtreamPass("")
+      }, 2000)
+    } catch (err) {
+      setImportMsg({ type: "error", text: err.message || "Xtream connection failed." })
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const playVod = useCallback((item) => setPlaying(item), [])
+
   const navLinks = [
     { name: "Browse", icon: Tv },
+    { name: "Guide", icon: CalendarDays },
+    { name: "Movies", icon: Clapperboard },
+    { name: "Series", icon: Film },
     { name: "Watchlist", icon: Heart },
     { name: "Monitor", icon: Activity },
   ]
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only z-[60] rounded-lg bg-[#6d35ff] px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Skip to content
+      </a>
       {/* ── NAV ─────────────────────────────────────────────────────── */}
       <nav className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -553,7 +922,7 @@ export default function AnointedIPTV() {
             </div>
             <span className="text-base font-bold tracking-tight text-foreground sm:text-lg">
               Anointed{" "}
-              <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
                 IPTV
               </span>
             </span>
@@ -567,7 +936,8 @@ export default function AnointedIPTV() {
               return (
                 <button
                   key={link.name}
-                  onClick={() => setActiveNav(link.name)}
+                  onClick={() => goNav(link.name)}
+                  aria-current={active ? "page" : undefined}
                   className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                     active
                       ? "bg-muted text-foreground"
@@ -589,12 +959,12 @@ export default function AnointedIPTV() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search channels…"
-                className="w-48 rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+                className="w-48 rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
               />
             </div>
             <button
               onClick={() => setShowImport(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90"
             >
               <Download className="size-4" /> Import M3U
             </button>
@@ -605,6 +975,12 @@ export default function AnointedIPTV() {
                     <Shield className="size-3" /> Admin
                   </Link>
                 )}
+                <Link
+                  href="/account"
+                  className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  <UserCog className="size-3" /> Account
+                </Link>
                 <button
                   onClick={logout}
                   className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
@@ -617,7 +993,7 @@ export default function AnointedIPTV() {
                 <Link href="/login" className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
                   <LogIn className="size-3" /> Log in
                 </Link>
-                <Link href="/signup" className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:opacity-90">
+                <Link href="/signup" className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-3 py-2 text-xs font-bold text-white hover:opacity-90">
                   <UserPlus className="size-3" /> Sign up
                 </Link>
               </div>
@@ -653,7 +1029,7 @@ export default function AnointedIPTV() {
                       setMobileMenuOpen(false)
                     }}
                     placeholder="Search channels…"
-                    className="w-full rounded-xl border border-border bg-muted py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+                    className="w-full rounded-xl border border-border bg-muted py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
@@ -664,12 +1040,13 @@ export default function AnointedIPTV() {
                       <button
                         key={link.name}
                         onClick={() => {
-                          setActiveNav(link.name)
+                          goNav(link.name)
                           setMobileMenuOpen(false)
                         }}
+                        aria-current={active ? "page" : undefined}
                         className={`flex flex-col items-center gap-1 rounded-xl px-3 py-3 text-xs font-semibold transition-colors ${
                           active
-                            ? "bg-rose-500/10 text-rose-400"
+                            ? "bg-[#6d35ff]/10 text-[#a78bfa]"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -684,7 +1061,7 @@ export default function AnointedIPTV() {
                     setShowImport(true)
                     setMobileMenuOpen(false)
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-sm font-bold text-white"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-3 text-sm font-bold text-white"
                 >
                   <Download className="size-4" /> Import M3U Playlist
                 </button>
@@ -695,6 +1072,13 @@ export default function AnointedIPTV() {
                         <Shield className="size-4" /> Admin
                       </Link>
                     )}
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
+                    >
+                      <UserCog className="size-4" /> Account
+                    </Link>
                     <button
                       onClick={() => { logout(); setMobileMenuOpen(false) }}
                       className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
@@ -707,7 +1091,7 @@ export default function AnointedIPTV() {
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground">
                       <LogIn className="size-4" /> Log in
                     </Link>
-                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white">
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-3 text-sm font-bold text-white">
                       <UserPlus className="size-4" /> Sign up
                     </Link>
                   </div>
@@ -717,6 +1101,38 @@ export default function AnointedIPTV() {
           )}
         </AnimatePresence>
       </nav>
+
+      {/* ── UNVERIFIED EMAIL BANNER ──────────────────────────────────── */}
+      {user && !user.is_verified && (
+        <div className="pt-16">
+          <div className="border-b border-amber-500/20 bg-amber-500/10">
+            <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+              <div className="flex items-start gap-2 text-xs text-amber-200">
+                <AlertTriangle className="mt-0.5 size-4 flex-shrink-0" aria-hidden="true" />
+                <span>
+                  Verify your email to unlock all channels.{" "}
+                  <span className="text-amber-200/70">
+                    Demo — the email is sent via an external service and may not always arrive.
+                  </span>
+                </span>
+              </div>
+              <button
+                onClick={handleResendVerification}
+                disabled={resendState === "sending" || resendState === "sent"}
+                className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-70"
+              >
+                {resendState === "sending"
+                  ? "Sending…"
+                  : resendState === "sent"
+                  ? "Email sent ✓"
+                  : resendState === "error"
+                  ? "Failed — retry"
+                  : "Resend verification email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── LOCKED CHANNEL MODAL ─────────────────────────────────────── */}
       <AnimatePresence>
@@ -729,26 +1145,33 @@ export default function AnointedIPTV() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl"
           >
             <motion.div
+              ref={lockedDlg.ref}
+              onKeyDown={lockedDlg.onKeyDown}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Members only"
+              tabIndex={-1}
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center"
+              className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center focus:outline-none"
             >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
                 <Lock className="size-8 text-amber-400" />
               </div>
-              <h2 className="mt-4 text-2xl font-bold text-foreground">Members Only Channel</h2>
+              <h2 className="mt-4 text-2xl font-bold text-foreground">Verified Members Only — Free</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {user && !user.is_verified
                   ? "Your account isn't verified yet. Check your email and click the verification link to unlock all channels."
-                  : "Sign up for a free account to unlock 60+ live channels, including news, documentaries, music, kids' shows and more."}
+                  : "Create a free account and verify your email to unlock 60+ live channels — news, documentaries, music, kids' shows and more."}
               </p>
+              <DemoNotice k="payments" className="mt-4 text-left" />
               <div className="mt-6 flex flex-col gap-3">
                 {user && !user.is_verified ? (
                   <button
                     onClick={() => setShowLockedModal(false)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white"
                   >
                     OK, I'll check my email
                   </button>
@@ -757,7 +1180,7 @@ export default function AnointedIPTV() {
                     <Link
                       href="/signup"
                       onClick={() => setShowLockedModal(false)}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white"
                     >
                       <UserPlus className="size-4" /> Sign Up Free
                     </Link>
@@ -767,6 +1190,13 @@ export default function AnointedIPTV() {
                       className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-6 py-3 text-sm font-semibold text-foreground hover:bg-accent"
                     >
                       <LogIn className="size-4" /> I already have an account
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      onClick={() => setShowLockedModal(false)}
+                      className="text-center text-xs font-semibold text-[#8b5cf6] hover:text-[#a78bfa]"
+                    >
+                      View plans &amp; pricing
                     </Link>
                   </>
                 )}
@@ -787,55 +1217,135 @@ export default function AnointedIPTV() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl"
           >
             <motion.div
+              ref={importDlg.ref}
+              onKeyDown={importDlg.onKeyDown}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Add channels"
+              tabIndex={-1}
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl"
+              className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl focus:outline-none"
             >
-              <h3 className="text-2xl font-bold tracking-tight text-foreground">
-                Import M3U Playlist
-              </h3>
+              <h3 className="text-2xl font-bold tracking-tight text-foreground">Add Channels</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Paste a public M3U playlist URL or the raw content. Channels load instantly into
-                the browse view.
+                Load channels from an M3U playlist or connect an Xtream Codes provider.
               </p>
 
+              {/* Source mode toggle */}
+              <div className="mt-4 inline-flex rounded-xl border border-border bg-muted p-1">
+                {[
+                  { key: "m3u", label: "M3U Playlist" },
+                  { key: "xtream", label: "Xtream Codes" },
+                ].map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => {
+                      setImportMode(m.key)
+                      setImportMsg(null)
+                    }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      importMode === m.key
+                        ? "bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] text-white"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              <DemoNotice k="import" className="mt-4" />
+
               <div className="mt-5 space-y-4">
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    M3U URL
-                  </label>
-                  <input
-                    value={m3uUrl}
-                    onChange={(e) => setM3uUrl(e.target.value)}
-                    placeholder="https://example.com/playlist.m3u"
-                    className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
-                  />
-                </div>
+                {importMode === "m3u" ? (
+                  <>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        M3U URL
+                      </label>
+                      <input
+                        value={m3uUrl}
+                        onChange={(e) => setM3uUrl(e.target.value)}
+                        placeholder="https://example.com/playlist.m3u"
+                        className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                      />
+                    </div>
 
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" />
-                  OR
-                  <div className="h-px flex-1 bg-border" />
-                </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="h-px flex-1 bg-border" />
+                      OR
+                      <div className="h-px flex-1 bg-border" />
+                    </div>
 
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Paste M3U Content
-                  </label>
-                  <textarea
-                    value={m3uContent}
-                    onChange={(e) => setM3uContent(e.target.value)}
-                    placeholder={'#EXTM3U\n#EXTINF:-1,Channel Name\nhttps://example.com/stream.m3u8'}
-                    rows={4}
-                    className="mt-1.5 w-full resize-none rounded-xl border border-border bg-muted px-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
-                  />
-                </div>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Paste M3U Content
+                      </label>
+                      <textarea
+                        value={m3uContent}
+                        onChange={(e) => setM3uContent(e.target.value)}
+                        placeholder={'#EXTM3U\n#EXTINF:-1,Channel Name\nhttps://example.com/stream.m3u8'}
+                        rows={4}
+                        className="mt-1.5 w-full resize-none rounded-xl border border-border bg-muted px-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      Enter the credentials your IPTV provider gave you. We connect server-side
+                      (your password is never exposed to the browser). You'll need an active
+                      provider for this to return channels.
+                    </p>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Server URL
+                      </label>
+                      <input
+                        value={xtreamServer}
+                        onChange={(e) => setXtreamServer(e.target.value)}
+                        placeholder="http://provider.tv:8080"
+                        className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Username
+                        </label>
+                        <input
+                          value={xtreamUser}
+                          onChange={(e) => setXtreamUser(e.target.value)}
+                          placeholder="username"
+                          autoComplete="off"
+                          className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          value={xtreamPass}
+                          onChange={(e) => setXtreamPass(e.target.value)}
+                          placeholder="password"
+                          autoComplete="off"
+                          className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {importMsg && (
                   <div
+                    role="status"
+                    aria-live="polite"
                     className={`rounded-xl border px-4 py-3 text-sm ${
                       importMsg.type === "success"
                         ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
@@ -854,17 +1364,17 @@ export default function AnointedIPTV() {
                     Cancel
                   </button>
                   <button
-                    onClick={handleImport}
+                    onClick={importMode === "m3u" ? handleImport : handleXtream}
                     disabled={importing}
-                    className="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90 disabled:opacity-60"
+                    className="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90 disabled:opacity-60"
                   >
                     {importing ? (
                       <>
-                        <Loader2 className="size-4 animate-spin" /> Importing…
+                        <Loader2 className="size-4 animate-spin" /> {importMode === "m3u" ? "Importing…" : "Connecting…"}
                       </>
                     ) : (
                       <>
-                        <Download className="size-4" /> Scan & Import
+                        <Download className="size-4" /> {importMode === "m3u" ? "Scan & Import" : "Connect"}
                       </>
                     )}
                   </button>
@@ -879,20 +1389,29 @@ export default function AnointedIPTV() {
         channel={playing}
         onClose={() => setPlaying(null)}
         onToggleWatchlist={toggleWatchlist}
-        isWatchlisted={playing ? watchlist.includes(playing.id) : false}
+        isWatchlisted={playing ? watchlist.includes(playing.cid ?? stableChannelId(playing)) : false}
       />
+
+      <div id="main-content" tabIndex={-1} className="focus:outline-none" />
 
       {/* ── BROWSE ──────────────────────────────────────────────────── */}
       {activeNav === "Browse" && (
         <main>
           {!search && (
-            <section
-              className="relative pt-24 pb-16 sm:pt-28"
-              style={{
-                background: `radial-gradient(ellipse at 20% 50%, ${featured.color}33 0%, transparent 60%), linear-gradient(to bottom, rgba(244,63,94,0.05), transparent 60%)`,
-              }}
-            >
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <section className="relative overflow-hidden pt-24 pb-16 sm:pt-28">
+              {/* Ambient brand background: violet/cyan wash + signature grid */}
+              <div
+                className="pointer-events-none absolute inset-0 bg-violet-grid opacity-60"
+                aria-hidden="true"
+              />
+              <div
+                className="pointer-events-none absolute inset-0"
+                aria-hidden="true"
+                style={{
+                  background: `radial-gradient(ellipse at 20% 30%, rgba(109,53,255,0.18) 0%, transparent 55%), radial-gradient(ellipse at 80% 15%, rgba(46,191,255,0.12) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, ${featured.color}22 0%, transparent 60%)`,
+                }}
+              />
+              <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -900,7 +1419,7 @@ export default function AnointedIPTV() {
                   className="max-w-2xl"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white animate-pulse-live">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-[#6d35ff] px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-white animate-pulse-live">
                       ● Live now
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -913,23 +1432,24 @@ export default function AnointedIPTV() {
                   <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                     {featured.desc}
                   </p>
+                  <DemoNotice k="epg" className="mt-5 max-w-md" />
                   <div className="mt-8 flex flex-wrap gap-3">
                     <button
                       onClick={() => handlePlayChannel(allChannels.find((c) => c.url) || allChannels[0])}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/40 hover:opacity-90"
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/40 hover:opacity-90"
                     >
                       <Play className="size-4 fill-white" /> Watch Now
                     </button>
                     <button
-                      onClick={() => toggleWatchlist(featured.id)}
+                      onClick={() => toggleWatchlist(featuredCid)}
                       className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted px-6 py-3 text-sm font-bold text-foreground hover:bg-accent"
                     >
                       <Heart
                         className={`size-4 ${
-                          watchlist.includes(featured.id) ? "fill-rose-400 text-rose-400" : ""
+                          watchlist.includes(featuredCid) ? "fill-rose-400 text-rose-400" : ""
                         }`}
                       />
-                      {watchlist.includes(featured.id) ? "Saved" : "Add to List"}
+                      {watchlist.includes(featuredCid) ? "Saved" : "Add to List"}
                     </button>
                   </div>
                 </motion.div>
@@ -941,7 +1461,7 @@ export default function AnointedIPTV() {
             {!search && (
               <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
-                  { label: "Total", value: uniqueChannels.length, tone: "text-fuchsia-400" },
+                  { label: "Total", value: uniqueChannels.length, tone: "text-foreground" },
                   { label: "Online", value: online, tone: "text-emerald-400" },
                   { label: "Degraded", value: degraded, tone: "text-amber-400" },
                   { label: "Offline", value: offline, tone: "text-rose-400" },
@@ -954,7 +1474,7 @@ export default function AnointedIPTV() {
                     className="rounded-2xl glass-card p-4 text-center"
                   >
                     <div className={`text-2xl font-bold sm:text-3xl ${s.tone}`}>{s.value}</div>
-                    <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {s.label}
                     </div>
                   </motion.div>
@@ -972,7 +1492,7 @@ export default function AnointedIPTV() {
                     onClick={() => setActiveCategory(cat)}
                     className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                       active
-                        ? "bg-gradient-to-r from-rose-600 to-orange-500 text-white shadow-lg shadow-rose-500/30"
+                        ? "bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] text-white shadow-lg shadow-[#6d35ff]/30"
                         : "border border-border bg-muted text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -982,23 +1502,62 @@ export default function AnointedIPTV() {
               })}
             </div>
 
+            {!search && activeCategory === "All" && (() => {
+              const continueChannels = continueCids
+                .map((id) => uniqueChannels.find((c) => c.cid === id))
+                .filter(Boolean)
+              if (continueChannels.length === 0) return null
+              return (
+                <div className="mb-12">
+                  <div className="mb-4 flex items-end justify-between">
+                    <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                      <History className="size-5 text-[#a78bfa]" /> Continue Watching
+                    </h2>
+                  </div>
+                  <div className="hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+                    {continueChannels.map((c) => (
+                      <div key={c.cid} className="w-44 flex-shrink-0 sm:w-48">
+                        <ChannelCard
+                          channel={c}
+                          onPlay={handlePlayChannel}
+                          isWatchlisted={watchlist.includes(c.cid)}
+                          onToggleWatchlist={toggleWatchlist}
+                          isLocked={!c.isFree && !isVerifiedUser}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
             {search || activeCategory !== "All" ? (
               <>
                 <div className="mb-4 text-sm text-muted-foreground">
                   {filteredBrowse.length} {filteredBrowse.length === 1 ? "channel" : "channels"}
                 </div>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {filteredBrowse.map((c) => (
+                  {filteredBrowse.slice(0, visibleCount).map((c) => (
                     <ChannelCard
                       key={c.id || c.name}
                       channel={c}
                       onPlay={handlePlayChannel}
-                      isWatchlisted={watchlist.includes(c.id)}
+                      isWatchlisted={watchlist.includes(c.cid)}
                       onToggleWatchlist={toggleWatchlist}
                       isLocked={!c.isFree && !isVerifiedUser}
                     />
                   ))}
                 </div>
+                {filteredBrowse.length > visibleCount && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      onClick={() => setVisibleCount((n) => n + 60)}
+                      className="rounded-xl border border-border bg-muted px-6 py-2.5 text-sm font-semibold text-foreground hover:bg-accent"
+                    >
+                      Load more ({filteredBrowse.length - visibleCount} more)
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               Object.entries(grouped).map(([cat, channels]) => (
@@ -1009,7 +1568,7 @@ export default function AnointedIPTV() {
                     </h2>
                     <button
                       onClick={() => setActiveCategory(cat)}
-                      className="text-xs font-semibold text-rose-400 hover:text-rose-300"
+                      className="text-xs font-semibold text-[#8b5cf6] hover:text-[#a78bfa]"
                     >
                       See all {channels.length} →
                     </button>
@@ -1020,7 +1579,7 @@ export default function AnointedIPTV() {
                         <ChannelCard
                           channel={c}
                           onPlay={handlePlayChannel}
-                          isWatchlisted={watchlist.includes(c.id)}
+                          isWatchlisted={watchlist.includes(c.cid)}
                           onToggleWatchlist={toggleWatchlist}
                         />
                       </div>
@@ -1034,23 +1593,59 @@ export default function AnointedIPTV() {
         </main>
       )}
 
+      {/* ── GUIDE (EPG) ─────────────────────────────────────────────── */}
+      {activeNav === "Guide" && (
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            TV{" "}
+            <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
+              Guide
+            </span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            What's on now and next across every channel.
+          </p>
+          <div className="mt-8">
+            <EpgGuide channels={uniqueChannels} onPlay={handlePlayChannel} />
+          </div>
+          <ContactFooter />
+        </main>
+      )}
+
+      {/* ── MOVIES (VOD) ────────────────────────────────────────────── */}
+      {activeNav === "Movies" && (
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+          <Catalog kind="movies" onPlay={playVod} />
+          <ContactFooter />
+        </main>
+      )}
+
+      {/* ── SERIES ──────────────────────────────────────────────────── */}
+      {activeNav === "Series" && (
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+          <Catalog kind="series" onPlay={playVod} />
+          <ContactFooter />
+        </main>
+      )}
+
       {/* ── WATCHLIST ───────────────────────────────────────────────── */}
       {activeNav === "Watchlist" && (
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             My{" "}
-            <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
               Watchlist
             </span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {uniqueChannels.filter((c) => watchlist.includes(c.id)).length} channels saved
+            {uniqueChannels.filter((c) => watchlist.includes(c.cid)).length} channels saved
           </p>
+          {!user && <DemoNotice k="watchlist" className="mt-4 max-w-xl" />}
 
-          {uniqueChannels.filter((c) => watchlist.includes(c.id)).length > 0 ? (
+          {uniqueChannels.filter((c) => watchlist.includes(c.cid)).length > 0 ? (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {uniqueChannels
-                .filter((c) => watchlist.includes(c.id))
+                .filter((c) => watchlist.includes(c.cid))
                 .map((c) => (
                   <ChannelCard
                     key={c.id}
@@ -1083,12 +1678,12 @@ export default function AnointedIPTV() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 Stream{" "}
-                <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
                   Monitor
                 </span>
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                {uniqueChannels.length} channels tracked · live health &amp; latency
+                {uniqueChannels.length} channels tracked · stream health &amp; latency (simulated)
               </p>
             </div>
             <div className="relative">
@@ -1097,14 +1692,16 @@ export default function AnointedIPTV() {
                 value={monitorSearch}
                 onChange={(e) => setMonitorSearch(e.target.value)}
                 placeholder="Filter channels…"
-                className="w-full rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none sm:w-56"
+                className="w-full rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none sm:w-56"
               />
             </div>
           </div>
 
+          <DemoNotice k="monitor" className="mt-6" />
+
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Total", value: uniqueChannels.length, tone: "text-fuchsia-400", Icon: Wifi },
+              { label: "Total", value: uniqueChannels.length, tone: "text-foreground", Icon: Wifi },
               { label: "Online", value: online, tone: "text-emerald-400", Icon: Activity },
               { label: "Degraded", value: degraded, tone: "text-amber-400", Icon: Activity },
               { label: "Offline", value: offline, tone: "text-rose-400", Icon: Activity },
@@ -1114,7 +1711,7 @@ export default function AnointedIPTV() {
                 <div key={s.label} className="rounded-2xl glass-card p-4">
                   <Icon className={`size-5 ${s.tone}`} />
                   <div className={`mt-2 text-2xl font-bold sm:text-3xl ${s.tone}`}>{s.value}</div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </div>
                 </div>
@@ -1125,7 +1722,7 @@ export default function AnointedIPTV() {
           <div className="mt-8 overflow-hidden rounded-2xl border border-border">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
-                <thead className="border-b border-border bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Channel</th>
                     <th className="px-4 py-3 text-left font-semibold">Group</th>
@@ -1140,7 +1737,11 @@ export default function AnointedIPTV() {
                     .filter(
                       (c) => !monitorSearch || c.name.toLowerCase().includes(monitorSearch.toLowerCase()),
                     )
-                    .map((c) => (
+                    .map((c) => {
+                      const hc = healthChecks[c.cid]
+                      const status = hc?.status ?? c.status
+                      const latency = hc?.latency ?? c.latency
+                      return (
                       <tr key={c.id || c.name} className="hover:bg-muted/30">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -1152,30 +1753,31 @@ export default function AnointedIPTV() {
                             />
                             <div className="min-w-0">
                               <div className="truncate font-semibold text-foreground">{c.name}</div>
-                              <div className="text-[10px] text-muted-foreground">{c.country}</div>
+                              <div className="text-[11px] text-muted-foreground">{c.country}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">{c.group}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-2 text-xs font-semibold ${statusColor(c.status)}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${statusDot(c.status)}`} />
-                            {c.status}
+                          <span className={`inline-flex items-center gap-2 text-xs font-semibold ${statusColor(status)}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${statusDot(status)}`} />
+                            {status}
+                            {hc?.real && <span className="text-[11px] font-normal text-muted-foreground">(live)</span>}
                           </span>
                         </td>
                         <td
-                          className={`px-4 py-3 text-xs font-semibold ${
-                            c.latency
-                              ? c.latency < 200
+                          className={`px-4 py-3 text-xs font-semibold tabular-nums ${
+                            latency
+                              ? latency < 200
                                 ? "text-emerald-400"
                                 : "text-amber-400"
-                              : "text-rose-400"
+                              : "text-muted-foreground"
                           }`}
                         >
-                          {c.latency ? `${c.latency}ms` : "—"}
+                          {latency ? `${latency}ms` : "—"}
                         </td>
                         <td
-                          className={`px-4 py-3 text-xs font-semibold ${
+                          className={`px-4 py-3 text-xs font-semibold tabular-nums ${
                             c.uptime > 95
                               ? "text-emerald-400"
                               : c.uptime > 82
@@ -1186,15 +1788,27 @@ export default function AnointedIPTV() {
                           {c.uptime}%
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handlePlayChannel(c)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20"
-                          >
-                            <Play className="size-3 fill-rose-400" /> Watch
-                          </button>
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => runHealthCheck(c)}
+                              disabled={hc?.checking}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-60"
+                              title="Ping this stream for a real health status"
+                            >
+                              <RefreshCw className={`size-3 ${hc?.checking ? "animate-spin" : ""}`} />
+                              Run check
+                            </button>
+                            <button
+                              onClick={() => handlePlayChannel(c)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-[#6d35ff]/30 bg-[#6d35ff]/10 px-3 py-1.5 text-xs font-semibold text-[#a78bfa] hover:bg-[#6d35ff]/20"
+                            >
+                              <Play className="size-3 fill-[#a78bfa]" /> Watch
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                 </tbody>
               </table>
             </div>
