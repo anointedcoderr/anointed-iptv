@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import Link from "next/link"
+import { TableRowsSkeleton } from "../components/Skeleton"
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth()
@@ -101,7 +102,7 @@ export default function AdminPage() {
             </Link>
             <div className="h-5 w-px bg-border" />
             <div className="flex items-center gap-2">
-              <Shield className="size-5 text-rose-400" />
+              <Shield className="size-5 text-[#8b5cf6]" />
               <span className="text-base font-bold">Admin Panel</span>
             </div>
           </div>
@@ -136,7 +137,7 @@ export default function AdminPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { label: "Total Users", value: stats.totalUsers, tone: "text-fuchsia-400" },
+                { label: "Total Users", value: stats.totalUsers, tone: "text-foreground" },
                 { label: "Verified Users", value: stats.verifiedUsers, tone: "text-emerald-400" },
                 { label: "Admins", value: stats.adminUsers, tone: "text-amber-400" },
               ].map((s) => (
@@ -155,8 +156,8 @@ export default function AdminPage() {
         {tab === "users" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             {loadingData ? (
-              <div className="py-16 text-center">
-                <Loader2 className="mx-auto size-8 animate-spin text-muted-foreground" />
+              <div className="overflow-hidden rounded-2xl border border-border">
+                <TableRowsSkeleton rows={6} cols={5} />
               </div>
             ) : usersError ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 py-16 text-center">
@@ -178,7 +179,7 @@ export default function AdminPage() {
               <div className="overflow-hidden rounded-2xl border border-border">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[600px] text-sm">
-                    <thead className="border-b border-border bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                       <tr>
                         <th className="px-4 py-3 text-left font-semibold">User</th>
                         <th className="px-4 py-3 text-left font-semibold">Verified</th>

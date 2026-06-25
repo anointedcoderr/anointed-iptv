@@ -37,7 +37,7 @@ export default function VerifyPage() {
       >
         {status === "loading" && (
           <>
-            <Loader2 className="mx-auto size-12 animate-spin text-rose-500" />
+            <Loader2 className="mx-auto size-12 animate-spin text-[#6d35ff]" />
             <h1 className="mt-4 text-xl font-bold text-foreground">Verifying your account…</h1>
           </>
         )}
@@ -63,7 +63,7 @@ export default function VerifyPage() {
             <p className="mt-2 text-sm text-muted-foreground">{error}</p>
             <button
               onClick={() => router.push("/signup")}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white"
             >
               Try signing up again
             </button>

@@ -73,7 +73,7 @@ function ChannelLogo({ logo, color, name, size = "md" }) {
   const shortText = logo && !logo.startsWith("http") ? logo : fallback
 
   const sizes = {
-    sm: "w-8 h-8 text-[9px] rounded-md",
+    sm: "w-8 h-8 text-[11px] rounded-md",
     md: "w-14 h-14 text-xs rounded-xl",
     lg: "w-16 h-16 text-sm rounded-2xl",
   }
@@ -185,7 +185,7 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground">{channel.name}</h2>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {channel.status === "online" && (
-                    <span className="inline-flex items-center gap-1 rounded bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white animate-pulse-live">
+                    <span className="inline-flex items-center gap-1 rounded bg-[#6d35ff] px-2 py-0.5 text-[11px] font-bold text-white animate-pulse-live">
                       ● LIVE
                     </span>
                   )}
@@ -253,11 +253,11 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
             {[
               { label: "STATUS", value: channel.status?.toUpperCase(), tone: statusColor(channel.status) },
               { label: "LATENCY", value: channel.latency ? `${channel.latency}ms` : "—", tone: "text-emerald-400" },
-              { label: "UPTIME", value: `${channel.uptime}%`, tone: "text-fuchsia-400" },
+              { label: "UPTIME", value: `${channel.uptime}%`, tone: "text-foreground" },
               { label: "GROUP", value: channel.group, tone: "text-foreground" },
             ].map((s) => (
               <div key={s.label}>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {s.label}
                 </div>
                 <div className={`text-sm font-semibold ${s.tone}`}>{s.value}</div>
@@ -315,14 +315,14 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
 
         {/* LIVE badge */}
         {channel.status === "online" && !isLocked && (
-          <div className="absolute bottom-2 left-2 rounded bg-rose-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
+          <div className="absolute bottom-2 left-2 rounded bg-[#6d35ff] px-1.5 py-0.5 text-[11px] font-bold text-white">
             LIVE
           </div>
         )}
 
         {/* Lock badge for non-free channels */}
         {isLocked && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-amber-600/90 px-1.5 py-0.5 text-[9px] font-bold text-white">
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-amber-600/90 px-1.5 py-0.5 text-[11px] font-bold text-white">
             <Lock className="size-2.5" /> VERIFIED
           </div>
         )}
@@ -334,7 +334,7 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
               <Lock className="size-4 text-white" />
             </div>
           ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-rose-600 to-orange-500 shadow-lg shadow-rose-500/50">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#6d35ff] to-[#2ebfff] shadow-lg shadow-[#6d35ff]/50">
               <Play className="size-4 fill-white text-white" />
             </div>
           )}
@@ -344,7 +344,7 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
       {/* Footer */}
       <div className="px-3 pb-3 pt-2.5">
         <div className="truncate text-sm font-semibold text-foreground">{channel.name}</div>
-        <div className="mt-0.5 flex items-center justify-between text-[10px]">
+        <div className="mt-0.5 flex items-center justify-between text-[11px]">
           <span className="text-muted-foreground">
             {channel.country} {channel.group}
           </span>
@@ -390,7 +390,7 @@ function ContactFooter() {
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
                 Anointed{" "}
-                <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
                   IPTV
                 </span>
               </span>
@@ -423,7 +423,7 @@ function ContactFooter() {
                 href="https://anointedcoder.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90"
               >
                 Visit Anointed Coder <ExternalLink className="size-4" />
               </a>
@@ -656,7 +656,7 @@ export default function AnointedIPTV() {
             </div>
             <span className="text-base font-bold tracking-tight text-foreground sm:text-lg">
               Anointed{" "}
-              <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
                 IPTV
               </span>
             </span>
@@ -692,12 +692,12 @@ export default function AnointedIPTV() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search channels…"
-                className="w-48 rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+                className="w-48 rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
               />
             </div>
             <button
               onClick={() => setShowImport(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90"
             >
               <Download className="size-4" /> Import M3U
             </button>
@@ -720,7 +720,7 @@ export default function AnointedIPTV() {
                 <Link href="/login" className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
                   <LogIn className="size-3" /> Log in
                 </Link>
-                <Link href="/signup" className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:opacity-90">
+                <Link href="/signup" className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-3 py-2 text-xs font-bold text-white hover:opacity-90">
                   <UserPlus className="size-3" /> Sign up
                 </Link>
               </div>
@@ -756,7 +756,7 @@ export default function AnointedIPTV() {
                       setMobileMenuOpen(false)
                     }}
                     placeholder="Search channels…"
-                    className="w-full rounded-xl border border-border bg-muted py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+                    className="w-full rounded-xl border border-border bg-muted py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
@@ -787,7 +787,7 @@ export default function AnointedIPTV() {
                     setShowImport(true)
                     setMobileMenuOpen(false)
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-sm font-bold text-white"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-3 text-sm font-bold text-white"
                 >
                   <Download className="size-4" /> Import M3U Playlist
                 </button>
@@ -810,7 +810,7 @@ export default function AnointedIPTV() {
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground">
                       <LogIn className="size-4" /> Log in
                     </Link>
-                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white">
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-3 text-sm font-bold text-white">
                       <UserPlus className="size-4" /> Sign up
                     </Link>
                   </div>
@@ -884,7 +884,7 @@ export default function AnointedIPTV() {
                 {user && !user.is_verified ? (
                   <button
                     onClick={() => setShowLockedModal(false)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white"
                   >
                     OK, I'll check my email
                   </button>
@@ -893,7 +893,7 @@ export default function AnointedIPTV() {
                     <Link
                       href="/signup"
                       onClick={() => setShowLockedModal(false)}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-6 py-3 text-sm font-bold text-white"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white"
                     >
                       <UserPlus className="size-4" /> Sign Up Free
                     </Link>
@@ -949,7 +949,7 @@ export default function AnointedIPTV() {
                     value={m3uUrl}
                     onChange={(e) => setM3uUrl(e.target.value)}
                     placeholder="https://example.com/playlist.m3u"
-                    className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
                   />
                 </div>
 
@@ -968,7 +968,7 @@ export default function AnointedIPTV() {
                     onChange={(e) => setM3uContent(e.target.value)}
                     placeholder={'#EXTM3U\n#EXTINF:-1,Channel Name\nhttps://example.com/stream.m3u8'}
                     rows={4}
-                    className="mt-1.5 w-full resize-none rounded-xl border border-border bg-muted px-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none"
+                    className="mt-1.5 w-full resize-none rounded-xl border border-border bg-muted px-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
                   />
                 </div>
 
@@ -994,7 +994,7 @@ export default function AnointedIPTV() {
                   <button
                     onClick={handleImport}
                     disabled={importing}
-                    className="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-500/30 hover:opacity-90 disabled:opacity-60"
+                    className="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90 disabled:opacity-60"
                   >
                     {importing ? (
                       <>
@@ -1024,13 +1024,20 @@ export default function AnointedIPTV() {
       {activeNav === "Browse" && (
         <main>
           {!search && (
-            <section
-              className="relative pt-24 pb-16 sm:pt-28"
-              style={{
-                background: `radial-gradient(ellipse at 20% 50%, ${featured.color}33 0%, transparent 60%), linear-gradient(to bottom, rgba(244,63,94,0.05), transparent 60%)`,
-              }}
-            >
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <section className="relative overflow-hidden pt-24 pb-16 sm:pt-28">
+              {/* Ambient brand background: violet/cyan wash + signature grid */}
+              <div
+                className="pointer-events-none absolute inset-0 bg-violet-grid opacity-60"
+                aria-hidden="true"
+              />
+              <div
+                className="pointer-events-none absolute inset-0"
+                aria-hidden="true"
+                style={{
+                  background: `radial-gradient(ellipse at 20% 30%, rgba(109,53,255,0.18) 0%, transparent 55%), radial-gradient(ellipse at 80% 15%, rgba(46,191,255,0.12) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, ${featured.color}22 0%, transparent 60%)`,
+                }}
+              />
+              <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1038,7 +1045,7 @@ export default function AnointedIPTV() {
                   className="max-w-2xl"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white animate-pulse-live">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-[#6d35ff] px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-white animate-pulse-live">
                       ● Live now
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -1055,7 +1062,7 @@ export default function AnointedIPTV() {
                   <div className="mt-8 flex flex-wrap gap-3">
                     <button
                       onClick={() => handlePlayChannel(allChannels.find((c) => c.url) || allChannels[0])}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/40 hover:opacity-90"
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/40 hover:opacity-90"
                     >
                       <Play className="size-4 fill-white" /> Watch Now
                     </button>
@@ -1080,7 +1087,7 @@ export default function AnointedIPTV() {
             {!search && (
               <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
-                  { label: "Total", value: uniqueChannels.length, tone: "text-fuchsia-400" },
+                  { label: "Total", value: uniqueChannels.length, tone: "text-foreground" },
                   { label: "Online", value: online, tone: "text-emerald-400" },
                   { label: "Degraded", value: degraded, tone: "text-amber-400" },
                   { label: "Offline", value: offline, tone: "text-rose-400" },
@@ -1093,7 +1100,7 @@ export default function AnointedIPTV() {
                     className="rounded-2xl glass-card p-4 text-center"
                   >
                     <div className={`text-2xl font-bold sm:text-3xl ${s.tone}`}>{s.value}</div>
-                    <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {s.label}
                     </div>
                   </motion.div>
@@ -1111,7 +1118,7 @@ export default function AnointedIPTV() {
                     onClick={() => setActiveCategory(cat)}
                     className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                       active
-                        ? "bg-gradient-to-r from-rose-600 to-orange-500 text-white shadow-lg shadow-rose-500/30"
+                        ? "bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] text-white shadow-lg shadow-[#6d35ff]/30"
                         : "border border-border bg-muted text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -1148,7 +1155,7 @@ export default function AnointedIPTV() {
                     </h2>
                     <button
                       onClick={() => setActiveCategory(cat)}
-                      className="text-xs font-semibold text-rose-400 hover:text-rose-300"
+                      className="text-xs font-semibold text-[#8b5cf6] hover:text-[#a78bfa]"
                     >
                       See all {channels.length} →
                     </button>
@@ -1178,7 +1185,7 @@ export default function AnointedIPTV() {
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             My{" "}
-            <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
               Watchlist
             </span>
           </h1>
@@ -1223,7 +1230,7 @@ export default function AnointedIPTV() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 Stream{" "}
-                <span className="bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
                   Monitor
                 </span>
               </h1>
@@ -1237,7 +1244,7 @@ export default function AnointedIPTV() {
                 value={monitorSearch}
                 onChange={(e) => setMonitorSearch(e.target.value)}
                 placeholder="Filter channels…"
-                className="w-full rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-500 focus:outline-none sm:w-56"
+                className="w-full rounded-xl border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none sm:w-56"
               />
             </div>
           </div>
@@ -1246,7 +1253,7 @@ export default function AnointedIPTV() {
 
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Total", value: uniqueChannels.length, tone: "text-fuchsia-400", Icon: Wifi },
+              { label: "Total", value: uniqueChannels.length, tone: "text-foreground", Icon: Wifi },
               { label: "Online", value: online, tone: "text-emerald-400", Icon: Activity },
               { label: "Degraded", value: degraded, tone: "text-amber-400", Icon: Activity },
               { label: "Offline", value: offline, tone: "text-rose-400", Icon: Activity },
@@ -1256,7 +1263,7 @@ export default function AnointedIPTV() {
                 <div key={s.label} className="rounded-2xl glass-card p-4">
                   <Icon className={`size-5 ${s.tone}`} />
                   <div className={`mt-2 text-2xl font-bold sm:text-3xl ${s.tone}`}>{s.value}</div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </div>
                 </div>
@@ -1267,7 +1274,7 @@ export default function AnointedIPTV() {
           <div className="mt-8 overflow-hidden rounded-2xl border border-border">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
-                <thead className="border-b border-border bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <thead className="border-b border-border bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Channel</th>
                     <th className="px-4 py-3 text-left font-semibold">Group</th>
@@ -1298,7 +1305,7 @@ export default function AnointedIPTV() {
                             />
                             <div className="min-w-0">
                               <div className="truncate font-semibold text-foreground">{c.name}</div>
-                              <div className="text-[10px] text-muted-foreground">{c.country}</div>
+                              <div className="text-[11px] text-muted-foreground">{c.country}</div>
                             </div>
                           </div>
                         </td>
@@ -1307,7 +1314,7 @@ export default function AnointedIPTV() {
                           <span className={`inline-flex items-center gap-2 text-xs font-semibold ${statusColor(status)}`}>
                             <span className={`h-1.5 w-1.5 rounded-full ${statusDot(status)}`} />
                             {status}
-                            {hc?.real && <span className="text-[9px] font-normal text-muted-foreground">(live)</span>}
+                            {hc?.real && <span className="text-[11px] font-normal text-muted-foreground">(live)</span>}
                           </span>
                         </td>
                         <td
@@ -1345,9 +1352,9 @@ export default function AnointedIPTV() {
                             </button>
                             <button
                               onClick={() => handlePlayChannel(c)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-[#6d35ff]/30 bg-[#6d35ff]/10 px-3 py-1.5 text-xs font-semibold text-[#a78bfa] hover:bg-[#6d35ff]/20"
                             >
-                              <Play className="size-3 fill-rose-400" /> Watch
+                              <Play className="size-3 fill-[#a78bfa]" /> Watch
                             </button>
                           </div>
                         </td>
