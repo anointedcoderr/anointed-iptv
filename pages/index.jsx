@@ -38,9 +38,11 @@ import { stableChannelId } from "../lib/channel-id"
 import { toggleId, fetchWatchlist, persistToggle } from "../lib/watchlist"
 import { saveProgress, getProgress, clearProgress, getProgressList } from "../lib/progress"
 import { useDialogA11y } from "../lib/use-dialog-a11y"
+import { getProfiles, getActiveProfileId, setActiveProfileId, restrictChannels } from "../lib/profiles"
 import DemoNotice from "../components/DemoNotice"
 import EpgGuide from "../components/EpgGuide"
 import Catalog from "../components/Catalog"
+import ProfileSwitcher from "../components/ProfileSwitcher"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -655,6 +657,8 @@ export default function AnointedIPTV() {
   const [healthChecks, setHealthChecks] = useState({}) // cid -> { status, latency, checking }
   const [continueCids, setContinueCids] = useState([]) // continue-watching, newest first
   const [visibleCount, setVisibleCount] = useState(60) // incremental render for large lists
+  const [profiles, setProfiles] = useState([])
+  const [activeProfileId, setActiveProfileIdState] = useState("main")
 
   // Verified users can access all channels, others see only isFree channels unlocked
   const isVerifiedUser = user?.is_verified
@@ -678,6 +682,17 @@ export default function AnointedIPTV() {
 
   useEffect(() => {
     setAllChannels(withMockHealth(BUILTIN_CHANNELS))
+    setProfiles(getProfiles())
+    setActiveProfileIdState(getActiveProfileId())
+  }, [])
+
+  const activeProfile =
+    profiles.find((p) => p.id === activeProfileId) ||
+    profiles[0] || { id: "main", name: "Main", kids: false, color: "#6d35ff" }
+
+  const switchProfile = useCallback((id) => {
+    setActiveProfileId(id)
+    setActiveProfileIdState(id)
   }, [])
 
   // Load any previously-saved shared/imported channels (best-effort).
@@ -750,19 +765,22 @@ export default function AnointedIPTV() {
     return true
   })
 
-  const categories = ["All", ...new Set(uniqueChannels.map((c) => c.group))]
-  const online = uniqueChannels.filter((c) => c.status === "online").length
-  const offline = uniqueChannels.filter((c) => c.status === "offline").length
-  const degraded = uniqueChannels.filter((c) => c.status === "degraded").length
+  // Apply the active profile's parental restriction to everything the UI shows.
+  const visibleChannels = restrictChannels(uniqueChannels, activeProfile)
 
-  const filteredBrowse = uniqueChannels.filter((c) => {
+  const categories = ["All", ...new Set(visibleChannels.map((c) => c.group))]
+  const online = visibleChannels.filter((c) => c.status === "online").length
+  const offline = visibleChannels.filter((c) => c.status === "offline").length
+  const degraded = visibleChannels.filter((c) => c.status === "degraded").length
+
+  const filteredBrowse = visibleChannels.filter((c) => {
     const matchCat = activeCategory === "All" || c.group === activeCategory
     const matchSearch = search ? c.name.toLowerCase().includes(search.toLowerCase()) : true
     return matchCat && matchSearch
   })
 
   const grouped = categories.slice(1).reduce((acc, cat) => {
-    acc[cat] = uniqueChannels.filter((c) => c.group === cat)
+    acc[cat] = visibleChannels.filter((c) => c.group === cat)
     return acc
   }, {})
 
@@ -968,6 +986,14 @@ export default function AnointedIPTV() {
             >
               <Download className="size-4" /> Import M3U
             </button>
+            <Link
+              href="/tv"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+              title="Big-screen TV mode"
+            >
+              <Tv className="size-3.5" /> TV
+            </Link>
+            <ProfileSwitcher activeProfile={activeProfile} profiles={profiles} onSwitch={switchProfile} />
             {user ? (
               <div className="flex items-center gap-2">
                 {user.is_admin && (
@@ -1065,6 +1091,16 @@ export default function AnointedIPTV() {
                 >
                   <Download className="size-4" /> Import M3U Playlist
                 </button>
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-muted px-3 py-2">
+                  <ProfileSwitcher activeProfile={activeProfile} profiles={profiles} onSwitch={switchProfile} />
+                  <Link
+                    href="/tv"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  >
+                    <Tv className="size-3.5" /> TV mode
+                  </Link>
+                </div>
                 {user ? (
                   <div className="flex gap-2">
                     {user.is_admin && (
@@ -1461,7 +1497,7 @@ export default function AnointedIPTV() {
             {!search && (
               <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
-                  { label: "Total", value: uniqueChannels.length, tone: "text-foreground" },
+                  { label: "Total", value: visibleChannels.length, tone: "text-foreground" },
                   { label: "Online", value: online, tone: "text-emerald-400" },
                   { label: "Degraded", value: degraded, tone: "text-amber-400" },
                   { label: "Offline", value: offline, tone: "text-rose-400" },
@@ -1504,7 +1540,7 @@ export default function AnointedIPTV() {
 
             {!search && activeCategory === "All" && (() => {
               const continueChannels = continueCids
-                .map((id) => uniqueChannels.find((c) => c.cid === id))
+                .map((id) => visibleChannels.find((c) => c.cid === id))
                 .filter(Boolean)
               if (continueChannels.length === 0) return null
               return (
@@ -1606,7 +1642,7 @@ export default function AnointedIPTV() {
             What's on now and next across every channel.
           </p>
           <div className="mt-8">
-            <EpgGuide channels={uniqueChannels} onPlay={handlePlayChannel} />
+            <EpgGuide channels={visibleChannels} onPlay={handlePlayChannel} />
           </div>
           <ContactFooter />
         </main>
@@ -1638,13 +1674,13 @@ export default function AnointedIPTV() {
             </span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {uniqueChannels.filter((c) => watchlist.includes(c.cid)).length} channels saved
+            {visibleChannels.filter((c) => watchlist.includes(c.cid)).length} channels saved
           </p>
           {!user && <DemoNotice k="watchlist" className="mt-4 max-w-xl" />}
 
-          {uniqueChannels.filter((c) => watchlist.includes(c.cid)).length > 0 ? (
+          {visibleChannels.filter((c) => watchlist.includes(c.cid)).length > 0 ? (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {uniqueChannels
+              {visibleChannels
                 .filter((c) => watchlist.includes(c.cid))
                 .map((c) => (
                   <ChannelCard
@@ -1683,7 +1719,7 @@ export default function AnointedIPTV() {
                 </span>
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                {uniqueChannels.length} channels tracked · stream health &amp; latency (simulated)
+                {visibleChannels.length} channels tracked · stream health &amp; latency (simulated)
               </p>
             </div>
             <div className="relative">
@@ -1701,7 +1737,7 @@ export default function AnointedIPTV() {
 
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Total", value: uniqueChannels.length, tone: "text-foreground", Icon: Wifi },
+              { label: "Total", value: visibleChannels.length, tone: "text-foreground", Icon: Wifi },
               { label: "Online", value: online, tone: "text-emerald-400", Icon: Activity },
               { label: "Degraded", value: degraded, tone: "text-amber-400", Icon: Activity },
               { label: "Offline", value: offline, tone: "text-rose-400", Icon: Activity },
@@ -1733,7 +1769,7 @@ export default function AnointedIPTV() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {uniqueChannels
+                  {visibleChannels
                     .filter(
                       (c) => !monitorSearch || c.name.toLowerCase().includes(monitorSearch.toLowerCase()),
                     )
