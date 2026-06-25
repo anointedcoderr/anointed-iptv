@@ -625,8 +625,12 @@ export default function AnointedIPTV() {
   const [activeNav, setActiveNav] = useState("Browse")
   const [activeCategory, setActiveCategory] = useState("All")
   const [showImport, setShowImport] = useState(false)
+  const [importMode, setImportMode] = useState("m3u") // "m3u" | "xtream"
   const [m3uUrl, setM3uUrl] = useState("")
   const [m3uContent, setM3uContent] = useState("")
+  const [xtreamServer, setXtreamServer] = useState("")
+  const [xtreamUser, setXtreamUser] = useState("")
+  const [xtreamPass, setXtreamPass] = useState("")
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const [monitorSearch, setMonitorSearch] = useState("")
@@ -634,6 +638,7 @@ export default function AnointedIPTV() {
   const [showLockedModal, setShowLockedModal] = useState(false)
   const [healthChecks, setHealthChecks] = useState({}) // cid -> { status, latency, checking }
   const [continueCids, setContinueCids] = useState([]) // continue-watching, newest first
+  const [visibleCount, setVisibleCount] = useState(60) // incremental render for large lists
 
   // Verified users can access all channels, others see only isFree channels unlocked
   const isVerifiedUser = user?.is_verified
@@ -674,6 +679,11 @@ export default function AnointedIPTV() {
   useEffect(() => {
     if (!playing) setContinueCids(getProgressList().map((e) => e.cid))
   }, [playing])
+
+  // Reset incremental rendering when the filter changes (keeps big lists fast).
+  useEffect(() => {
+    setVisibleCount(60)
+  }, [search, activeCategory])
 
   // Hydrate the watchlist: from the account when signed in, else from localStorage.
   useEffect(() => {
@@ -763,6 +773,20 @@ export default function AnointedIPTV() {
     }
   }, [resendVerification])
 
+  const addImportedChannels = (channels, sourceUrl) => {
+    const withHealth = withMockHealth(channels.map((c) => ({ ...c, id: stableChannelId(c) })))
+    setImportedChannels((prev) => {
+      const have = new Set(prev.map((c) => c.cid))
+      return [...prev, ...withHealth.filter((c) => !have.has(c.cid))]
+    })
+    // Best-effort persistence so imports survive a refresh (silent if Supabase unset).
+    fetch("/api/save-channels", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channels, sourceUrl: sourceUrl || null }),
+    }).catch(() => {})
+  }
+
   const handleImport = async () => {
     if (!m3uUrl && !m3uContent) {
       setImportMsg({ type: "error", text: "Please enter a URL or paste M3U content." })
@@ -779,22 +803,8 @@ export default function AnointedIPTV() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      const withHealth = withMockHealth(
-        data.channels.map((c) => ({ ...c, id: stableChannelId(c) })),
-      )
-      setImportedChannels((prev) => {
-        const have = new Set(prev.map((c) => c.cid))
-        return [...prev, ...withHealth.filter((c) => !have.has(c.cid))]
-      })
+      addImportedChannels(data.channels, m3uUrl)
       setImportMsg({ type: "success", text: `Loaded ${data.count} channels from playlist.` })
-
-      // Best-effort persistence so imports survive a refresh (silent if Supabase unset).
-      fetch("/api/save-channels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channels: data.channels, sourceUrl: m3uUrl || null }),
-      }).catch(() => {})
-
       setTimeout(() => {
         setShowImport(false)
         setM3uUrl("")
@@ -802,6 +812,37 @@ export default function AnointedIPTV() {
       }, 2000)
     } catch (err) {
       setImportMsg({ type: "error", text: err.message || "Import failed." })
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleXtream = async () => {
+    if (!xtreamServer || !xtreamUser || !xtreamPass) {
+      setImportMsg({ type: "error", text: "Enter your server URL, username and password." })
+      return
+    }
+    setImporting(true)
+    setImportMsg(null)
+    try {
+      const res = await fetch("/api/xtream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ server: xtreamServer, username: xtreamUser, password: xtreamPass }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      addImportedChannels(data.channels, xtreamServer)
+      setImportMsg({ type: "success", text: `Connected — loaded ${data.count} live channels.` })
+      setTimeout(() => {
+        setShowImport(false)
+        setXtreamServer("")
+        setXtreamUser("")
+        setXtreamPass("")
+      }, 2000)
+    } catch (err) {
+      setImportMsg({ type: "error", text: err.message || "Xtream connection failed." })
     } finally {
       setImporting(false)
     }
@@ -1109,47 +1150,117 @@ export default function AnointedIPTV() {
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl"
             >
-              <h3 className="text-2xl font-bold tracking-tight text-foreground">
-                Import M3U Playlist
-              </h3>
+              <h3 className="text-2xl font-bold tracking-tight text-foreground">Add Channels</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Paste a public M3U playlist URL or the raw content. Channels load instantly into
-                the browse view.
+                Load channels from an M3U playlist or connect an Xtream Codes provider.
               </p>
+
+              {/* Source mode toggle */}
+              <div className="mt-4 inline-flex rounded-xl border border-border bg-muted p-1">
+                {[
+                  { key: "m3u", label: "M3U Playlist" },
+                  { key: "xtream", label: "Xtream Codes" },
+                ].map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => {
+                      setImportMode(m.key)
+                      setImportMsg(null)
+                    }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      importMode === m.key
+                        ? "bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] text-white"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
 
               <DemoNotice k="import" className="mt-4" />
 
               <div className="mt-5 space-y-4">
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    M3U URL
-                  </label>
-                  <input
-                    value={m3uUrl}
-                    onChange={(e) => setM3uUrl(e.target.value)}
-                    placeholder="https://example.com/playlist.m3u"
-                    className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
-                  />
-                </div>
+                {importMode === "m3u" ? (
+                  <>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        M3U URL
+                      </label>
+                      <input
+                        value={m3uUrl}
+                        onChange={(e) => setM3uUrl(e.target.value)}
+                        placeholder="https://example.com/playlist.m3u"
+                        className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                      />
+                    </div>
 
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" />
-                  OR
-                  <div className="h-px flex-1 bg-border" />
-                </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="h-px flex-1 bg-border" />
+                      OR
+                      <div className="h-px flex-1 bg-border" />
+                    </div>
 
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Paste M3U Content
-                  </label>
-                  <textarea
-                    value={m3uContent}
-                    onChange={(e) => setM3uContent(e.target.value)}
-                    placeholder={'#EXTM3U\n#EXTINF:-1,Channel Name\nhttps://example.com/stream.m3u8'}
-                    rows={4}
-                    className="mt-1.5 w-full resize-none rounded-xl border border-border bg-muted px-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
-                  />
-                </div>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Paste M3U Content
+                      </label>
+                      <textarea
+                        value={m3uContent}
+                        onChange={(e) => setM3uContent(e.target.value)}
+                        placeholder={'#EXTM3U\n#EXTINF:-1,Channel Name\nhttps://example.com/stream.m3u8'}
+                        rows={4}
+                        className="mt-1.5 w-full resize-none rounded-xl border border-border bg-muted px-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      Enter the credentials your IPTV provider gave you. We connect server-side
+                      (your password is never exposed to the browser). You'll need an active
+                      provider for this to return channels.
+                    </p>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Server URL
+                      </label>
+                      <input
+                        value={xtreamServer}
+                        onChange={(e) => setXtreamServer(e.target.value)}
+                        placeholder="http://provider.tv:8080"
+                        className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Username
+                        </label>
+                        <input
+                          value={xtreamUser}
+                          onChange={(e) => setXtreamUser(e.target.value)}
+                          placeholder="username"
+                          autoComplete="off"
+                          className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          value={xtreamPass}
+                          onChange={(e) => setXtreamPass(e.target.value)}
+                          placeholder="password"
+                          autoComplete="off"
+                          className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#6d35ff] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {importMsg && (
                   <div
@@ -1171,17 +1282,17 @@ export default function AnointedIPTV() {
                     Cancel
                   </button>
                   <button
-                    onClick={handleImport}
+                    onClick={importMode === "m3u" ? handleImport : handleXtream}
                     disabled={importing}
                     className="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6d35ff]/30 hover:opacity-90 disabled:opacity-60"
                   >
                     {importing ? (
                       <>
-                        <Loader2 className="size-4 animate-spin" /> Importing…
+                        <Loader2 className="size-4 animate-spin" /> {importMode === "m3u" ? "Importing…" : "Connecting…"}
                       </>
                     ) : (
                       <>
-                        <Download className="size-4" /> Scan & Import
+                        <Download className="size-4" /> {importMode === "m3u" ? "Scan & Import" : "Connect"}
                       </>
                     )}
                   </button>
@@ -1342,7 +1453,7 @@ export default function AnointedIPTV() {
                   {filteredBrowse.length} {filteredBrowse.length === 1 ? "channel" : "channels"}
                 </div>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {filteredBrowse.map((c) => (
+                  {filteredBrowse.slice(0, visibleCount).map((c) => (
                     <ChannelCard
                       key={c.id || c.name}
                       channel={c}
@@ -1353,6 +1464,16 @@ export default function AnointedIPTV() {
                     />
                   ))}
                 </div>
+                {filteredBrowse.length > visibleCount && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      onClick={() => setVisibleCount((n) => n + 60)}
+                      className="rounded-xl border border-border bg-muted px-6 py-2.5 text-sm font-semibold text-foreground hover:bg-accent"
+                    >
+                      Load more ({filteredBrowse.length - visibleCount} more)
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               Object.entries(grouped).map(([cat, channels]) => (
