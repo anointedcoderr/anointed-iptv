@@ -614,8 +614,11 @@ function ContactFooter() {
             </div>
           </div>
         </div>
-        <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Anointed Coder. All rights reserved.
+        <div className="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-center text-xs text-muted-foreground">
+          <Link href="/pricing" className="font-semibold text-[#8b5cf6] hover:text-[#a78bfa]">
+            View plans &amp; pricing
+          </Link>
+          <span>© {new Date().getFullYear()} Anointed Coder. All rights reserved.</span>
         </div>
       </div>
     </footer>
@@ -1187,6 +1190,13 @@ export default function AnointedIPTV() {
                       className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-6 py-3 text-sm font-semibold text-foreground hover:bg-accent"
                     >
                       <LogIn className="size-4" /> I already have an account
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      onClick={() => setShowLockedModal(false)}
+                      className="text-center text-xs font-semibold text-[#8b5cf6] hover:text-[#a78bfa]"
+                    >
+                      View plans &amp; pricing
                     </Link>
                   </>
                 )}
