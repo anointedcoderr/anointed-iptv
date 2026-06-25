@@ -25,6 +25,9 @@ import {
   Volume2,
   Gauge,
   History,
+  CalendarDays,
+  Clapperboard,
+  Film,
 } from "lucide-react"
 import Link from "next/link"
 import { BUILTIN_CHANNELS, getFeatured } from "../lib/channels"
@@ -33,6 +36,8 @@ import { stableChannelId } from "../lib/channel-id"
 import { toggleId, fetchWatchlist, persistToggle } from "../lib/watchlist"
 import { saveProgress, getProgress, clearProgress, getProgressList } from "../lib/progress"
 import DemoNotice from "../components/DemoNotice"
+import EpgGuide from "../components/EpgGuide"
+import Catalog from "../components/Catalog"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -184,6 +189,16 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
     }
 
     const tryPlay = async () => {
+      const isHls = /\.m3u8(\?|$)/i.test(channel.url)
+      if (!isHls) {
+        // Progressive file (MP4/WebM, e.g. VOD) — play directly.
+        video.src = channel.url
+        video.load()
+        video.addEventListener("loadedmetadata", seekToSaved, { once: true })
+        setLoading(false)
+        video.play().catch(() => {})
+        return
+      }
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         // Native HLS (Safari/iOS) — track menus handled by the OS player.
         video.src = channel.url
@@ -792,8 +807,13 @@ export default function AnointedIPTV() {
     }
   }
 
+  const playVod = useCallback((item) => setPlaying(item), [])
+
   const navLinks = [
     { name: "Browse", icon: Tv },
+    { name: "Guide", icon: CalendarDays },
+    { name: "Movies", icon: Clapperboard },
+    { name: "Series", icon: Film },
     { name: "Watchlist", icon: Heart },
     { name: "Monitor", icon: Activity },
   ]
@@ -1364,6 +1384,41 @@ export default function AnointedIPTV() {
               ))
             )}
           </div>
+          <ContactFooter />
+        </main>
+      )}
+
+      {/* ── GUIDE (EPG) ─────────────────────────────────────────────── */}
+      {activeNav === "Guide" && (
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            TV{" "}
+            <span className="bg-gradient-to-r from-[#6d35ff] to-[#2ebfff] bg-clip-text text-transparent">
+              Guide
+            </span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            What's on now and next across every channel.
+          </p>
+          <div className="mt-8">
+            <EpgGuide channels={uniqueChannels} onPlay={handlePlayChannel} />
+          </div>
+          <ContactFooter />
+        </main>
+      )}
+
+      {/* ── MOVIES (VOD) ────────────────────────────────────────────── */}
+      {activeNav === "Movies" && (
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+          <Catalog kind="movies" onPlay={playVod} />
+          <ContactFooter />
+        </main>
+      )}
+
+      {/* ── SERIES ──────────────────────────────────────────────────── */}
+      {activeNav === "Series" && (
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+          <Catalog kind="series" onPlay={playVod} />
           <ContactFooter />
         </main>
       )}
