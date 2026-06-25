@@ -19,12 +19,19 @@ import {
   UserPlus,
   RefreshCw,
   AlertTriangle,
+  Maximize,
+  PictureInPicture2,
+  Captions,
+  Volume2,
+  Gauge,
+  History,
 } from "lucide-react"
 import Link from "next/link"
 import { BUILTIN_CHANNELS, getFeatured } from "../lib/channels"
 import { useAuth } from "../lib/auth-context"
 import { stableChannelId } from "../lib/channel-id"
 import { toggleId, fetchWatchlist, persistToggle } from "../lib/watchlist"
+import { saveProgress, getProgress, clearProgress, getProgressList } from "../lib/progress"
 import DemoNotice from "../components/DemoNotice"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -103,11 +110,54 @@ function ChannelLogo({ logo, color, name, size = "md" }) {
 
 // ─── HLS Player Modal ────────────────────────────────────────────────────────
 
+function TrackSelect({ icon: Icon, label, value, onChange, options }) {
+  if (!options || options.length <= 1) return null
+  return (
+    <label className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground">
+      <Icon className="size-3.5" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="bg-transparent text-foreground focus:outline-none"
+        aria-label={label}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="bg-card text-foreground">
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
   const videoRef = useRef(null)
   const hlsRef = useRef(null)
+  const lastSaveRef = useRef(0)
   const [loading, setLoading] = useState(true)
   const [playerError, setPlayerError] = useState(null)
+  const [levels, setLevels] = useState([])
+  const [currentLevel, setCurrentLevel] = useState(-1)
+  const [audioTracks, setAudioTracks] = useState([])
+  const [currentAudio, setCurrentAudio] = useState(-1)
+  const [subtitleTracks, setSubtitleTracks] = useState([])
+  const [currentSubtitle, setCurrentSubtitle] = useState(-1)
+  const [canPiP, setCanPiP] = useState(false)
+  const [resumed, setResumed] = useState(null)
+
+  const cid = channel ? (channel.cid ?? stableChannelId(channel)) : null
+
+  // Persist playback position for "Continue watching" (VOD-style finite streams).
+  const handleTimeUpdate = useCallback(() => {
+    const v = videoRef.current
+    if (!v || !cid || !isFinite(v.duration)) return
+    const now = Date.now()
+    if (now - lastSaveRef.current < 5000) return
+    lastSaveRef.current = now
+    saveProgress(cid, v.currentTime, v.duration, now)
+  }, [cid])
 
   useEffect(() => {
     if (!channel?.url || !videoRef.current) {
@@ -116,12 +166,29 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
     }
     setLoading(true)
     setPlayerError(null)
+    setLevels([])
+    setAudioTracks([])
+    setSubtitleTracks([])
+    setCurrentLevel(-1)
     const video = videoRef.current
+    if (typeof document !== "undefined") {
+      setCanPiP(!!document.pictureInPictureEnabled)
+    }
+
+    const saved = cid ? getProgress(cid) : null
+    const seekToSaved = () => {
+      if (saved?.position && isFinite(video.duration) && video.duration > 0) {
+        video.currentTime = Math.min(saved.position, video.duration - 5)
+        setResumed(Math.floor(saved.position))
+      }
+    }
 
     const tryPlay = async () => {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // Native HLS (Safari/iOS) — track menus handled by the OS player.
         video.src = channel.url
         video.load()
+        video.addEventListener("loadedmetadata", seekToSaved, { once: true })
         setLoading(false)
         return
       }
@@ -132,16 +199,29 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
           hlsRef.current = hls
           hls.loadSource(channel.url)
           hls.attachMedia(video)
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
             setLoading(false)
+            setLevels(hls.levels || [])
+            setCurrentLevel(hls.currentLevel)
+            setAudioTracks(hls.audioTracks || [])
+            setCurrentAudio(hls.audioTrack)
+            setSubtitleTracks(hls.subtitleTracks || [])
+            setCurrentSubtitle(hls.subtitleTrack)
+            seekToSaved()
             video.play().catch(() => {})
           })
+          hls.on(Hls.Events.LEVEL_SWITCHED, (_, d) => setCurrentLevel(d.level))
+          hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_, d) => setCurrentAudio(d.id))
+          hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, (_, d) => setCurrentSubtitle(d.id))
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
               setPlayerError("Stream unavailable or blocked by CORS.")
               setLoading(false)
             }
           })
+        } else {
+          setPlayerError("Your browser can't play this stream.")
+          setLoading(false)
         }
       } catch {
         setPlayerError("Could not load player.")
@@ -155,9 +235,48 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
         hlsRef.current = null
       }
     }
-  }, [channel?.url])
+  }, [channel?.url, cid])
+
+  const setQuality = (idx) => {
+    setCurrentLevel(idx)
+    if (hlsRef.current) hlsRef.current.currentLevel = idx
+  }
+  const setAudio = (id) => {
+    setCurrentAudio(id)
+    if (hlsRef.current) hlsRef.current.audioTrack = id
+  }
+  const setSubtitle = (id) => {
+    setCurrentSubtitle(id)
+    if (hlsRef.current) {
+      hlsRef.current.subtitleTrack = id
+      hlsRef.current.subtitleDisplay = id !== -1
+    }
+  }
+  const togglePiP = async () => {
+    const v = videoRef.current
+    if (!v) return
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture()
+      else await v.requestPictureInPicture()
+    } catch {}
+  }
+  const goFullscreen = () => {
+    const v = videoRef.current
+    if (v?.requestFullscreen) v.requestFullscreen().catch(() => {})
+    else if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen()
+  }
 
   if (!channel) return null
+
+  const qualityOptions = [
+    { value: -1, label: "Auto" },
+    ...levels.map((l, i) => ({ value: i, label: l.height ? `${l.height}p` : `${Math.round((l.bitrate || 0) / 1000)}k` })),
+  ]
+  const audioOptions = audioTracks.map((t) => ({ value: t.id, label: t.name || t.lang || `Audio ${t.id + 1}` }))
+  const subtitleOptions = [
+    { value: -1, label: "Off" },
+    ...subtitleTracks.map((t) => ({ value: t.id, label: t.name || t.lang || `Sub ${t.id + 1}` })),
+  ]
 
   return (
     <AnimatePresence>
@@ -227,12 +346,14 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
                   controls
                   autoPlay
                   playsInline
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={() => cid && clearProgress(cid)}
                   className="h-full w-full object-contain"
                   style={{ display: loading ? "none" : "block" }}
                 />
                 {loading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-background to-black">
-                    <Loader2 className="size-12 animate-spin text-rose-500" />
+                    <Loader2 className="size-12 animate-spin text-[#6d35ff]" />
                     <div className="text-sm text-muted-foreground">Connecting to stream…</div>
                   </div>
                 )}
@@ -247,6 +368,38 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
               </div>
             )}
           </div>
+
+          {/* Player controls — quality / audio / subtitles / PiP / fullscreen */}
+          {channel.url && !playerError && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <TrackSelect icon={Gauge} label="Stream quality" value={currentLevel} onChange={setQuality} options={qualityOptions} />
+              <TrackSelect icon={Volume2} label="Audio track" value={currentAudio} onChange={setAudio} options={audioOptions} />
+              <TrackSelect icon={Captions} label="Subtitles" value={currentSubtitle} onChange={setSubtitle} options={subtitleOptions} />
+              {resumed != null && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
+                  <History className="size-3.5" aria-hidden="true" /> Resumed
+                </span>
+              )}
+              <div className="ml-auto flex items-center gap-2">
+                {canPiP && (
+                  <button
+                    onClick={togglePiP}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground"
+                    aria-label="Picture in picture"
+                  >
+                    <PictureInPicture2 className="size-4" />
+                  </button>
+                )}
+                <button
+                  onClick={goFullscreen}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground"
+                  aria-label="Fullscreen"
+                >
+                  <Maximize className="size-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Stats row */}
           <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -465,6 +618,7 @@ export default function AnointedIPTV() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLockedModal, setShowLockedModal] = useState(false)
   const [healthChecks, setHealthChecks] = useState({}) // cid -> { status, latency, checking }
+  const [continueCids, setContinueCids] = useState([]) // continue-watching, newest first
 
   // Verified users can access all channels, others see only isFree channels unlocked
   const isVerifiedUser = user?.is_verified
@@ -500,6 +654,11 @@ export default function AnointedIPTV() {
       })
       .catch(() => {})
   }, [])
+
+  // Continue-watching: refresh from localStorage on mount and whenever the player closes.
+  useEffect(() => {
+    if (!playing) setContinueCids(getProgressList().map((e) => e.cid))
+  }, [playing])
 
   // Hydrate the watchlist: from the account when signed in, else from localStorage.
   useEffect(() => {
@@ -1127,6 +1286,35 @@ export default function AnointedIPTV() {
                 )
               })}
             </div>
+
+            {!search && activeCategory === "All" && (() => {
+              const continueChannels = continueCids
+                .map((id) => uniqueChannels.find((c) => c.cid === id))
+                .filter(Boolean)
+              if (continueChannels.length === 0) return null
+              return (
+                <div className="mb-12">
+                  <div className="mb-4 flex items-end justify-between">
+                    <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                      <History className="size-5 text-[#a78bfa]" /> Continue Watching
+                    </h2>
+                  </div>
+                  <div className="hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+                    {continueChannels.map((c) => (
+                      <div key={c.cid} className="w-44 flex-shrink-0 sm:w-48">
+                        <ChannelCard
+                          channel={c}
+                          onPlay={handlePlayChannel}
+                          isWatchlisted={watchlist.includes(c.cid)}
+                          onToggleWatchlist={toggleWatchlist}
+                          isLocked={!c.isFree && !isVerifiedUser}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
 
             {search || activeCategory !== "All" ? (
               <>
