@@ -111,6 +111,7 @@ export default function AdminPage() {
       </nav>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
+        <h1 className="sr-only">Admin Panel</h1>
         {/* Tabs */}
         <div className="mb-8 flex gap-2">
           {[

@@ -112,6 +112,8 @@ export default function SignupPage() {
             <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
+              aria-label="Name (optional)"
+              autoComplete="name"
               placeholder="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -123,6 +125,8 @@ export default function SignupPage() {
             <input
               type="email"
               required
+              aria-label="Email address"
+              autoComplete="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -135,6 +139,8 @@ export default function SignupPage() {
               type="password"
               required
               minLength={6}
+              aria-label="Password (6+ characters)"
+              autoComplete="new-password"
               placeholder="Password (6+ characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -143,7 +149,7 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+            <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
               {error}
             </div>
           )}

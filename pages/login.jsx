@@ -55,6 +55,8 @@ export default function LoginPage() {
             <input
               type="email"
               required
+              aria-label="Email address"
+              autoComplete="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -66,6 +68,8 @@ export default function LoginPage() {
             <input
               type="password"
               required
+              aria-label="Password"
+              autoComplete="current-password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -74,7 +78,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+            <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
               {error}
             </div>
           )}

@@ -28,13 +28,16 @@ import {
   CalendarDays,
   Clapperboard,
   Film,
+  UserCog,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/router"
 import { BUILTIN_CHANNELS, getFeatured } from "../lib/channels"
 import { useAuth } from "../lib/auth-context"
 import { stableChannelId } from "../lib/channel-id"
 import { toggleId, fetchWatchlist, persistToggle } from "../lib/watchlist"
 import { saveProgress, getProgress, clearProgress, getProgressList } from "../lib/progress"
+import { useDialogA11y } from "../lib/use-dialog-a11y"
 import DemoNotice from "../components/DemoNotice"
 import EpgGuide from "../components/EpgGuide"
 import Catalog from "../components/Catalog"
@@ -151,6 +154,7 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
   const [currentSubtitle, setCurrentSubtitle] = useState(-1)
   const [canPiP, setCanPiP] = useState(false)
   const [resumed, setResumed] = useState(null)
+  const dlg = useDialogA11y(!!channel, onClose)
 
   const cid = channel ? (channel.cid ?? stableChannelId(channel)) : null
 
@@ -304,12 +308,18 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/95 backdrop-blur-xl"
       >
         <motion.div
+          ref={dlg.ref}
+          onKeyDown={dlg.onKeyDown}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${channel.name} player`}
+          tabIndex={-1}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.25 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-4xl"
+          className="w-full max-w-4xl focus:outline-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
@@ -614,8 +624,11 @@ function ContactFooter() {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+const NAV_VIEWS = ["Browse", "Guide", "Movies", "Series", "Watchlist", "Monitor"]
+
 export default function AnointedIPTV() {
   const { user, logout, resendVerification } = useAuth()
+  const router = useRouter()
   const [allChannels, setAllChannels] = useState(BUILTIN_CHANNELS)
   const [importedChannels, setImportedChannels] = useState([])
   const [watchlist, setWatchlist] = useState([])
@@ -642,6 +655,11 @@ export default function AnointedIPTV() {
 
   // Verified users can access all channels, others see only isFree channels unlocked
   const isVerifiedUser = user?.is_verified
+
+  const lockedDlg = useDialogA11y(showLockedModal, () => setShowLockedModal(false))
+  const importDlg = useDialogA11y(showImport, () => {
+    if (!importing) setShowImport(false)
+  })
 
   const handlePlayChannel = useCallback(
     (channel) => {
@@ -684,6 +702,25 @@ export default function AnointedIPTV() {
   useEffect(() => {
     setVisibleCount(60)
   }, [search, activeCategory])
+
+  // Sync the active view with the URL (?view=) so views are linkable + refresh-safe.
+  useEffect(() => {
+    const v = router.query.view
+    if (typeof v === "string" && NAV_VIEWS.includes(v)) setActiveNav(v)
+    else if (!v) setActiveNav("Browse")
+  }, [router.query.view])
+
+  const goNav = useCallback(
+    (name) => {
+      setActiveNav(name)
+      router.push(
+        name === "Browse" ? { pathname: "/" } : { pathname: "/", query: { view: name } },
+        undefined,
+        { shallow: true },
+      )
+    },
+    [router],
+  )
 
   // Hydrate the watchlist: from the account when signed in, else from localStorage.
   useEffect(() => {
@@ -861,6 +898,12 @@ export default function AnointedIPTV() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only z-[60] rounded-lg bg-[#6d35ff] px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Skip to content
+      </a>
       {/* ── NAV ─────────────────────────────────────────────────────── */}
       <nav className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -890,7 +933,8 @@ export default function AnointedIPTV() {
               return (
                 <button
                   key={link.name}
-                  onClick={() => setActiveNav(link.name)}
+                  onClick={() => goNav(link.name)}
+                  aria-current={active ? "page" : undefined}
                   className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                     active
                       ? "bg-muted text-foreground"
@@ -928,6 +972,12 @@ export default function AnointedIPTV() {
                     <Shield className="size-3" /> Admin
                   </Link>
                 )}
+                <Link
+                  href="/account"
+                  className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  <UserCog className="size-3" /> Account
+                </Link>
                 <button
                   onClick={logout}
                   className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
@@ -987,12 +1037,13 @@ export default function AnointedIPTV() {
                       <button
                         key={link.name}
                         onClick={() => {
-                          setActiveNav(link.name)
+                          goNav(link.name)
                           setMobileMenuOpen(false)
                         }}
+                        aria-current={active ? "page" : undefined}
                         className={`flex flex-col items-center gap-1 rounded-xl px-3 py-3 text-xs font-semibold transition-colors ${
                           active
-                            ? "bg-rose-500/10 text-rose-400"
+                            ? "bg-[#6d35ff]/10 text-[#a78bfa]"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -1018,6 +1069,13 @@ export default function AnointedIPTV() {
                         <Shield className="size-4" /> Admin
                       </Link>
                     )}
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
+                    >
+                      <UserCog className="size-4" /> Account
+                    </Link>
                     <button
                       onClick={() => { logout(); setMobileMenuOpen(false) }}
                       className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
@@ -1084,11 +1142,17 @@ export default function AnointedIPTV() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl"
           >
             <motion.div
+              ref={lockedDlg.ref}
+              onKeyDown={lockedDlg.onKeyDown}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Members only"
+              tabIndex={-1}
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center"
+              className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center focus:outline-none"
             >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
                 <Lock className="size-8 text-amber-400" />
@@ -1143,12 +1207,18 @@ export default function AnointedIPTV() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl"
           >
             <motion.div
+              ref={importDlg.ref}
+              onKeyDown={importDlg.onKeyDown}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Add channels"
+              tabIndex={-1}
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl"
+              className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl focus:outline-none"
             >
               <h3 className="text-2xl font-bold tracking-tight text-foreground">Add Channels</h3>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -1264,6 +1334,8 @@ export default function AnointedIPTV() {
 
                 {importMsg && (
                   <div
+                    role="status"
+                    aria-live="polite"
                     className={`rounded-xl border px-4 py-3 text-sm ${
                       importMsg.type === "success"
                         ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
@@ -1309,6 +1381,8 @@ export default function AnointedIPTV() {
         onToggleWatchlist={toggleWatchlist}
         isWatchlisted={playing ? watchlist.includes(playing.cid ?? stableChannelId(playing)) : false}
       />
+
+      <div id="main-content" tabIndex={-1} className="focus:outline-none" />
 
       {/* ── BROWSE ──────────────────────────────────────────────────── */}
       {activeNav === "Browse" && (
