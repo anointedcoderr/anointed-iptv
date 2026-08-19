@@ -67,7 +67,7 @@ export default function PricingPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
             Pick the plan that fits. Cancel anytime. This is how a production build would present
-            tiers — wired to Stripe in a real deployment.
+            tiers, wired to Stripe in a real deployment.
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export default function PricingPage() {
             aria-live="polite"
             className="mx-auto mt-8 max-w-xl rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-200"
           >
-            You picked <strong>{picked}</strong> — but this is a demo, so no card is charged and no
+            You picked <strong>{picked}</strong>, but this is a demo, so no card is charged and no
             subscription is created. In production this would open Stripe Checkout.
           </div>
         )}

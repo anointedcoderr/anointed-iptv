@@ -54,7 +54,7 @@ async function pingStream(url) {
       return { status: "offline", latency: null, error: "Timeout" };
     }
     // A thrown fetch (CORS, DNS, network) means we could NOT verify the stream.
-    // Never assume it's online — report "unknown" so real outages aren't masked.
+    // Never assume it's online, report "unknown" so real outages aren't masked.
     return { status: "unknown", latency: null, error: err.message };
   }
 }

@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
   if (error) return res.status(500).json({ error: error.message })
 
-  // Send verification email — MUST be awaited so Vercel doesn't kill the function
+  // Send verification email: MUST be awaited so Vercel doesn't kill the function
   try {
     await sendVerificationEmail(cleanEmail, verifyToken)
   } catch (err) {

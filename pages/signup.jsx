@@ -76,7 +76,7 @@ export default function SignupPage() {
                 : resendState === "sent"
                 ? "Verification email re-sent ✓"
                 : resendState === "error"
-                ? "Couldn't resend — try again"
+                ? "Couldn't resend: try again"
                 : "Resend verification email"}
             </button>
           </div>
