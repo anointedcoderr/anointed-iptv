@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" })
   const session = getUserFromReq(req)
   if (!session?.id) return res.status(401).json({ error: "Sign in first." })
-  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+  if (!adminSupabase) return res.status(503).json({ error: "Service temporarily unavailable. Please try again shortly." })
 
   const { name } = req.body || {}
   const { error } = await adminSupabase

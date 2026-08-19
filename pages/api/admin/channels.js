@@ -7,7 +7,7 @@ import { adminSupabase } from "../../../lib/admin-supabase"
 export default async function handler(req, res) {
   const session = getUserFromReq(req)
   if (!session?.isAdmin) return res.status(403).json({ error: "Admin access required." })
-  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+  if (!adminSupabase) return res.status(503).json({ error: "Service temporarily unavailable. Please try again shortly." })
 
   if (req.method === "GET") {
     const { data, error } = await adminSupabase

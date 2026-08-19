@@ -6,7 +6,7 @@ import { sendVerificationEmail } from "../../../lib/send-email"
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" })
-  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+  if (!adminSupabase) return res.status(503).json({ error: "Service temporarily unavailable. Please try again shortly." })
 
   const { email, password, name } = req.body || {}
   if (!email || !password) return res.status(400).json({ error: "Email and password required." })

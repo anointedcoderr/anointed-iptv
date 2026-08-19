@@ -72,6 +72,7 @@ export default function AccountPage() {
 
   const [resendState, setResendState] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteMsg, setDeleteMsg] = useState(null)
 
   const [profiles, setProfiles] = useState([])
   const [newProfileName, setNewProfileName] = useState("")
@@ -192,11 +193,15 @@ export default function AccountPage() {
   const deleteAccount = async () => {
     if (!window.confirm("Delete your account permanently? This cannot be undone.")) return
     setDeleting(true)
+    setDeleteMsg(null)
     try {
-      await fetch("/api/auth/delete", { method: "POST" })
+      const res = await fetch("/api/auth/delete", { method: "POST" })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error)
       await refresh()
       router.push("/")
-    } catch {
+    } catch (err) {
+      setDeleteMsg({ tone: "error", text: err.message || "Could not delete account. Please try again." })
       setDeleting(false)
     }
   }
@@ -472,6 +477,7 @@ export default function AccountPage() {
               {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Delete account
             </button>
           </div>
+          {deleteMsg && <div className="mt-3"><Banner tone={deleteMsg.tone}>{deleteMsg.text}</Banner></div>}
         </section>
       </div>
     </div>
