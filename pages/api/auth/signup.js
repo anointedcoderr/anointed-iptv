@@ -6,7 +6,7 @@ import { sendVerificationEmail } from "../../../lib/send-email"
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" })
-  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+  if (!adminSupabase) return res.status(503).json({ error: "Service temporarily unavailable. Please try again shortly." })
 
   const { email, password, name } = req.body || {}
   if (!email || !password) return res.status(400).json({ error: "Email and password required." })
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
   if (error) return res.status(500).json({ error: error.message })
 
-  // Send verification email — MUST be awaited so Vercel doesn't kill the function
+  // Send verification email: MUST be awaited so Vercel doesn't kill the function
   try {
     await sendVerificationEmail(cleanEmail, verifyToken)
   } catch (err) {

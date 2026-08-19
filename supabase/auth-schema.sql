@@ -1,4 +1,4 @@
--- Anointed IPTV — Auth & Admin Schema
+-- Anointed IPTV: Auth & Admin Schema
 -- Run this AFTER the base schema.sql in your Supabase SQL Editor.
 
 -- ── USERS ──────────────────────────────────────────────────────────────────

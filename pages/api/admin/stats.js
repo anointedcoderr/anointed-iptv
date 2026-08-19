@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" })
   const user = getUserFromReq(req)
   if (!user?.isAdmin) return res.status(403).json({ error: "Admin access required." })
-  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+  if (!adminSupabase) return res.status(503).json({ error: "Service temporarily unavailable. Please try again shortly." })
 
   const { count: totalUsers } = await adminSupabase.from("iptv_users").select("*", { count: "exact", head: true })
   const { count: verifiedUsers } = await adminSupabase.from("iptv_users").select("*", { count: "exact", head: true }).eq("is_verified", true)

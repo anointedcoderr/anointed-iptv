@@ -246,7 +246,7 @@ export default function TvMode() {
           }
         }}
         className="hide-scrollbar flex gap-2 overflow-x-auto px-8 py-4 outline-none focus-visible:ring-2 focus-visible:ring-[#6d35ff]"
-        aria-label="Categories — use left and right arrows"
+        aria-label="Categories: use left and right arrows"
       >
         {categories.map((cat) => (
           <button

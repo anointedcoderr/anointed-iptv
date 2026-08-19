@@ -11,8 +11,13 @@ export default function VerifyPage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
+    if (!router.isReady) return
     const { token } = router.query
-    if (!token) return
+    if (!token) {
+      setError("Missing verification link. Please use the link from your email.")
+      setStatus("error")
+      return
+    }
 
     fetch(`/api/auth/verify?token=${token}`)
       .then(async (res) => {
@@ -26,7 +31,7 @@ export default function VerifyPage() {
         setError(err.message)
         setStatus("error")
       })
-  }, [router.query.token])
+  }, [router.isReady, router.query.token])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

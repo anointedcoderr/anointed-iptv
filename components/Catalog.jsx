@@ -135,7 +135,7 @@ export default function Catalog({ kind, onPlay }) {
         {isMovies ? "Movies" : "Series"}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Sample on-demand library — public-domain open films, fully legal demo content.
+        Sample on-demand library, public-domain open films, fully legal demo content.
       </p>
 
       <div className="mt-8">

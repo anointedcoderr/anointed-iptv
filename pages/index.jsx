@@ -197,16 +197,21 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
     const tryPlay = async () => {
       const isHls = /\.m3u8(\?|$)/i.test(channel.url)
       if (!isHls) {
-        // Progressive file (MP4/WebM, e.g. VOD) — play directly.
+        // Progressive file (MP4/WebM, e.g. VOD): play directly.
         video.src = channel.url
         video.load()
         video.addEventListener("loadedmetadata", seekToSaved, { once: true })
+        video.addEventListener(
+          "error",
+          () => setPlayerError("Stream unavailable or blocked by CORS."),
+          { once: true }
+        )
         setLoading(false)
         video.play().catch(() => {})
         return
       }
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        // Native HLS (Safari/iOS) — track menus handled by the OS player.
+        // Native HLS (Safari/iOS): track menus handled by the OS player.
         video.src = channel.url
         video.load()
         video.addEventListener("loadedmetadata", seekToSaved, { once: true })
@@ -396,7 +401,7 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
             )}
           </div>
 
-          {/* Player controls — quality / audio / subtitles / PiP / fullscreen */}
+          {/* Player controls: quality / audio / subtitles / PiP / fullscreen */}
           {channel.url && !playerError && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <TrackSelect icon={Gauge} label="Stream quality" value={currentLevel} onChange={setQuality} options={qualityOptions} />
@@ -432,8 +437,8 @@ function PlayerModal({ channel, onClose, onToggleWatchlist, isWatchlisted }) {
           <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
               { label: "STATUS", value: channel.status?.toUpperCase(), tone: statusColor(channel.status) },
-              { label: "LATENCY", value: channel.latency ? `${channel.latency}ms` : "—", tone: "text-emerald-400" },
-              { label: "UPTIME", value: `${channel.uptime}%`, tone: "text-foreground" },
+              { label: "LATENCY", value: channel.latency ? `${channel.latency}ms` : "-", tone: "text-emerald-400" },
+              { label: "UPTIME", value: channel.uptime ? `${channel.uptime}%` : "-", tone: "text-foreground" },
               { label: "GROUP", value: channel.group, tone: "text-foreground" },
             ].map((s) => (
               <div key={s.label}>
@@ -507,7 +512,7 @@ function ChannelCard({ channel, onPlay, isWatchlisted, onToggleWatchlist, isLock
           </div>
         )}
 
-        {/* Hover overlay — play or lock */}
+        {/* Hover overlay: play or lock */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
           {isLocked ? (
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 shadow-lg shadow-amber-500/50">
@@ -586,7 +591,7 @@ function ContactFooter() {
                 Anointed Coder
               </a>{" "}
               showcasing live HLS playback, account-saved watchlists, M3U playlist import, and
-              simulated stream-health monitoring. Ships with free public test streams — fully legal
+              simulated stream-health monitoring. Ships with free public test streams, fully legal
               demo content.
             </p>
           </div>
@@ -892,7 +897,7 @@ export default function AnointedIPTV() {
       if (!res.ok) throw new Error(data.error)
 
       addImportedChannels(data.channels, xtreamServer)
-      setImportMsg({ type: "success", text: `Connected — loaded ${data.count} live channels.` })
+      setImportMsg({ type: "success", text: `Connected, loaded ${data.count} live channels.` })
       setTimeout(() => {
         setShowImport(false)
         setXtreamServer("")
@@ -1148,7 +1153,7 @@ export default function AnointedIPTV() {
                 <span>
                   Verify your email to unlock all channels.{" "}
                   <span className="text-amber-200/70">
-                    Demo — the email is sent via an external service and may not always arrive.
+                    Demo: the email is sent via an external service and may not always arrive.
                   </span>
                 </span>
               </div>
@@ -1162,7 +1167,7 @@ export default function AnointedIPTV() {
                   : resendState === "sent"
                   ? "Email sent ✓"
                   : resendState === "error"
-                  ? "Failed — retry"
+                  ? "Failed, retry"
                   : "Resend verification email"}
               </button>
             </div>
@@ -1196,11 +1201,11 @@ export default function AnointedIPTV() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
                 <Lock className="size-8 text-amber-400" />
               </div>
-              <h2 className="mt-4 text-2xl font-bold text-foreground">Verified Members Only — Free</h2>
+              <h2 className="mt-4 text-2xl font-bold text-foreground">Verified Members Only, Free</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {user && !user.is_verified
                   ? "Your account isn't verified yet. Check your email and click the verification link to unlock all channels."
-                  : "Create a free account and verify your email to unlock 60+ live channels — news, documentaries, music, kids' shows and more."}
+                  : "Create a free account and verify your email to unlock 60+ live channels: news, documentaries, music, kids' shows and more."}
               </p>
               <DemoNotice k="payments" className="mt-4 text-left" />
               <div className="mt-6 flex flex-col gap-3">
@@ -1810,7 +1815,7 @@ export default function AnointedIPTV() {
                               : "text-muted-foreground"
                           }`}
                         >
-                          {latency ? `${latency}ms` : "—"}
+                          {latency ? `${latency}ms` : "-"}
                         </td>
                         <td
                           className={`px-4 py-3 text-xs font-semibold tabular-nums ${

@@ -4,7 +4,7 @@ import { adminSupabase } from "../../lib/admin-supabase"
 // Persists a signed-in user's watchlist to iptv_user_watchlist (channel_id is
 // text so built-in numeric ids and imported/shared string ids coexist).
 export default async function handler(req, res) {
-  if (!adminSupabase) return res.status(503).json({ error: "Database not configured." })
+  if (!adminSupabase) return res.status(503).json({ error: "Service temporarily unavailable. Please try again shortly." })
   const session = getUserFromReq(req)
   if (!session?.id) return res.status(401).json({ error: "Sign in to use your watchlist." })
 

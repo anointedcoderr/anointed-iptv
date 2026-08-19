@@ -72,6 +72,7 @@ export default function AccountPage() {
 
   const [resendState, setResendState] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteMsg, setDeleteMsg] = useState(null)
 
   const [profiles, setProfiles] = useState([])
   const [newProfileName, setNewProfileName] = useState("")
@@ -192,11 +193,15 @@ export default function AccountPage() {
   const deleteAccount = async () => {
     if (!window.confirm("Delete your account permanently? This cannot be undone.")) return
     setDeleting(true)
+    setDeleteMsg(null)
     try {
-      await fetch("/api/auth/delete", { method: "POST" })
+      const res = await fetch("/api/auth/delete", { method: "POST" })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error)
       await refresh()
       router.push("/")
-    } catch {
+    } catch (err) {
+      setDeleteMsg({ tone: "error", text: err.message || "Could not delete account. Please try again." })
       setDeleting(false)
     }
   }
@@ -246,7 +251,7 @@ export default function AccountPage() {
                   : resendState === "sent"
                   ? "Email sent ✓"
                   : resendState === "error"
-                  ? "Failed — retry"
+                  ? "Failed: retry"
                   : "Resend verification"}
               </button>
             )}
@@ -346,7 +351,7 @@ export default function AccountPage() {
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Switch profiles from the top bar. Kids profiles only see family-friendly channels.
-            <span className="text-amber-200/80"> Demo — profiles are stored in this browser.</span>
+            <span className="text-amber-200/80"> Demo: profiles are stored in this browser.</span>
           </p>
 
           <div className="mt-4 space-y-2">
@@ -399,7 +404,7 @@ export default function AccountPage() {
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
               {pinSet
-                ? "A PIN is set — required to switch out of a Kids profile."
+                ? "A PIN is set, required to switch out of a Kids profile."
                 : "Set a PIN to require it when switching out of a Kids profile."}
             </p>
             <div className="mt-3 flex gap-2">
@@ -430,7 +435,7 @@ export default function AccountPage() {
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Your plan allows <strong className="text-foreground">2 simultaneous streams</strong>.
-            <span className="text-amber-200/80"> Demo — cross-device sessions would be tracked server-side in production.</span>
+            <span className="text-amber-200/80"> Demo: cross-device sessions would be tracked server-side in production.</span>
           </p>
           <div className="mt-4 space-y-2">
             {[
@@ -472,6 +477,7 @@ export default function AccountPage() {
               {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Delete account
             </button>
           </div>
+          {deleteMsg && <div className="mt-3"><Banner tone={deleteMsg.tone}>{deleteMsg.text}</Banner></div>}
         </section>
       </div>
     </div>

@@ -1,4 +1,4 @@
-# Anointed IPTV — Upgrade & Rebrand Implementation Plan
+# Anointed IPTV: Upgrade & Rebrand Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -20,13 +20,13 @@ The repo currently has **zero tests and no test runner**. This plan therefore:
 
 ## Scope Note
 
-This is a **master plan**. Phases 0–2 are specified to full task/step granularity with exact edits and code — they are ready to execute now and deliver the highest credibility-per-hour (working features + on-brand look). **Phases 3–5 are specified at design granularity** (files, data models, component/API interfaces, acceptance criteria, order). Before executing each of Phases 3–5, expand it into its own dated plan (`docs/superpowers/plans/...`) using this skill, because writing full TDD code for EPG/VOD/Xtream/analytics/billing now would be speculative. Each phase produces working, shippable software on its own.
+This is a **master plan**. Phases 0-2 are specified to full task/step granularity with exact edits and code. They are ready to execute now and deliver the highest credibility-per-hour (working features + on-brand look). **Phases 3-5 are specified at design granularity** (files, data models, component/API interfaces, acceptance criteria, order). Before executing each of Phases 3-5, expand it into its own dated plan (`docs/superpowers/plans/...`) using this skill, because writing full TDD code for EPG/VOD/Xtream/analytics/billing now would be speculative. Each phase produces working, shippable software on its own.
 
 **Pre-req for persistence tasks:** Supabase env vars (`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and `RESEND_API_KEY` must be set in `.env.local` / Vercel. Tasks that need them note it; where unset, the feature must degrade gracefully + show the demo notice.
 
 ---
 
-# Phase 0 — Tooling & shared foundations
+# Phase 0: Tooling & shared foundations
 
 **Goal:** Make the codebase testable and create the shared helpers (demo copy, stable IDs) the later phases depend on.
 
@@ -127,7 +127,7 @@ describe("stableChannelId", () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `npm test -- channel-id` → FAIL (module not found).
+- [ ] **Step 2: Run to verify it fails**: `npm test -- channel-id` → FAIL (module not found).
 
 - [ ] **Step 3: Implement `lib/channel-id.js`**
 
@@ -148,7 +148,7 @@ export function stableChannelId(channel) {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes** — `npm test -- channel-id` → PASS.
+- [ ] **Step 4: Run to verify it passes**: `npm test -- channel-id` → PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -198,17 +198,17 @@ export const DEMO = {
 
 const NOTICES = {
   payments:
-    "Demo — no payment required. Channels unlock by verifying your email (free). No subscription or billing exists in this demo.",
+    "Demo: no payment required. Channels unlock by verifying your email (free). No subscription or billing exists in this demo.",
   watchlist:
-    "Demo — sign in to save your watchlist to your account; as a guest it is kept in this browser only.",
+    "Demo: sign in to save your watchlist to your account; as a guest it is kept in this browser only.",
   monitor:
-    "Demo — health, latency and uptime are simulated for illustration. Use “Run check” to ping a stream for real.",
+    "Demo: health, latency and uptime are simulated for illustration. Use “Run check” to ping a stream for real.",
   import:
-    "Demo — imported channels load instantly; sign in to save them, otherwise they last for this session only.",
+    "Demo: imported channels load instantly; sign in to save them, otherwise they last for this session only.",
   verification:
-    "Demo — the verification email is sent via an external service and may not always arrive. Use “Resend” if it doesn’t.",
+    "Demo: the verification email is sent via an external service and may not always arrive. Use “Resend” if it doesn’t.",
   epg:
-    "Demo — no program guide yet. “LIVE” means the channel is streaming now, not a scheduled programme.",
+    "Demo: no program guide yet. “LIVE” means the channel is streaming now, not a scheduled programme.",
 }
 
 export function demoNotice(key) {
@@ -227,7 +227,7 @@ git commit -m "feat: central demo copy + feature flags"
 
 ---
 
-# Phase 1 — Credibility quick wins
+# Phase 1: Credibility quick wins
 
 **Goal:** Every visible feature does what it claims, or says clearly that it's demo-only. Fix the broken admin and the 4 bugs.
 
@@ -356,7 +356,7 @@ const toggleWatchlist = useCallback((cid) => {
 
 - [ ] **Step 8: Fix the footer claim** (`index.jsx:392`): change "watchlist persistence" → "watchlist (saved to your account when signed in)".
 
-- [ ] **Step 9: Verify** — `npm run lint && npm run build && npm test`. Manual: sign in, heart a channel, refresh → still hearted; sign out → guest hearts persist in localStorage only.
+- [ ] **Step 9: Verify**: `npm run lint && npm run build && npm test`. Manual: sign in, heart a channel, refresh → still hearted; sign out → guest hearts persist in localStorage only.
 
 - [ ] **Step 10: Commit**
 
@@ -405,7 +405,7 @@ useEffect(() => {
 
 - [ ] **Step 4:** Add the import demo notice (Task 1.6 supplies the component) to the import modal success state.
 
-- [ ] **Step 5: Verify** — import a small public M3U; refresh → channels still present (if Supabase configured); IDs don't collide.
+- [ ] **Step 5: Verify**: import a small public M3U; refresh → channels still present (if Supabase configured); IDs don't collide.
 
 - [ ] **Step 6: Commit**
 
@@ -423,7 +423,7 @@ git commit -m "feat: persist imported channels + stabilise channel ids"
 - [ ] **Step 1: Fix the bug.** In `health-check.js`, a thrown fetch should not be "online". Replace the CORS branch:
 
 ```js
-// A thrown fetch means we couldn't verify — report unknown, never assume online.
+// A thrown fetch means we couldn't verify, report unknown, never assume online.
 return { status: "unknown", latency: null, error: err.message }
 ```
 
@@ -431,7 +431,7 @@ return { status: "unknown", latency: null, error: err.message }
 
 - [ ] **Step 3:** Add a per-row "Run check" button that calls `/api/health-check` for that channel's `url` and updates that row's status/latency in place. Keep simulated values as the default so the table is populated.
 
-- [ ] **Step 4: Verify** — `npm run build`; click "Run check" on a row → status updates from the real ping (or "unknown" for CORS-blocked).
+- [ ] **Step 4: Verify**: `npm run build`; click "Run check" on a row → status updates from the real ping (or "unknown" for CORS-blocked).
 
 - [ ] **Step 5: Commit**
 
@@ -442,7 +442,7 @@ git commit -m "fix: health-check no longer reports failed pings as online; label
 
 ### Task 1.4: Fix the broken admin Users endpoint
 
-Rewrite `pages/api/admin/users.js` to match what `admin.jsx` actually calls (GET list, PATCH toggle, DELETE remove) using cookie-JWT admin auth — the same scheme as `stats.js`.
+Rewrite `pages/api/admin/users.js` to match what `admin.jsx` actually calls (GET list, PATCH toggle, DELETE remove) using cookie-JWT admin auth, the same scheme as `stats.js`.
 
 **Files:**
 - Rewrite: `pages/api/admin/users.js`
@@ -496,7 +496,7 @@ export default async function handler(req, res) {
 
 - [ ] **Step 2:** In `admin.jsx`, surface load errors (replace the empty `catch {}` at `:49`) and render an empty state when `users.length === 0`. Add a "Verify" toggle (PATCH `is_verified`) and a "Remove" (DELETE) with a confirm dialog.
 
-- [ ] **Step 3: Verify** — sign in as an admin user, open `/admin` → Users tab populates; Make Admin / Demote / Verify / Remove all work and refresh the list.
+- [ ] **Step 3: Verify**: sign in as an admin user, open `/admin` → Users tab populates; Make Admin / Demote / Verify / Remove all work and refresh the list.
 
 - [ ] **Step 4: Commit**
 
@@ -537,7 +537,7 @@ export default async function handler(req, res) {
 
 - [ ] **Step 2:** Add `resendVerification` to `auth-context.jsx` (POST the endpoint) and a "Resend verification email" button on the signup success screen + an unverified banner on the homepage. Show the `demoNotice("verification")` copy.
 
-- [ ] **Step 3: Verify** — `npm run build`; as an unverified user, click Resend → success toast (or graceful 502 message).
+- [ ] **Step 3: Verify**: `npm run build`; as an unverified user, click Resend → success toast (or graceful 502 message).
 
 - [ ] **Step 4: Commit**
 
@@ -585,7 +585,7 @@ export default function DemoNotice({ k, className = "" }) {
 
 - [ ] **Step 3:** Update `_app.jsx` meta description to not over-claim (e.g. drop implications of persistence/monitoring beyond what's wired).
 
-- [ ] **Step 4: Verify** — `npm run build`; visually confirm each notice renders in the right place.
+- [ ] **Step 4: Verify**: `npm run build`; visually confirm each notice renders in the right place.
 
 - [ ] **Step 5: Commit**
 
@@ -596,7 +596,7 @@ git commit -m "feat: honest demo-only notices for payments, watchlist, monitor, 
 
 ---
 
-# Phase 2 — On-brand rebrand (violet → cyan)
+# Phase 2: On-brand rebrand (violet → cyan)
 
 **Goal:** The product looks like a bespoke Anointed Coder build, not a template. Brand: violet `#6d35ff` → cyan `#2ebfff`, Manrope type, glassmorphism + violet glow, semantic status colors. (Source: anointedcoder.com brand audit.)
 
@@ -641,7 +641,7 @@ git commit -m "feat: honest demo-only notices for payments, watchlist, monitor, 
 }
 ```
 
-- [ ] **Step 5: Verify** — `npm run build`; homepage renders in Manrope.
+- [ ] **Step 5: Verify**: `npm run build`; homepage renders in Manrope.
 
 - [ ] **Step 6: Commit**
 
@@ -668,7 +668,7 @@ Apply this find→replace mapping in `pages/index.jsx`, `pages/login.jsx`, `page
 
 - [ ] **Step 1:** Apply the mapping (grep each page for `rose`/`orange`/`fuchsia` and convert; keep semantic status rose for "offline" only until Task 2.3 reassigns it).
 - [ ] **Step 2:** Unify the signup CTA: the nav "Sign up" and the signup-page submit and the "Sign Up Free" modal button must all use the same `from-[#6d35ff] to-[#2ebfff]` treatment.
-- [ ] **Step 3: Verify** — `npm run build`; click through home/login/signup/verify/admin → no rose/orange remains except where Task 2.3 maps semantics; CTAs are violet→cyan.
+- [ ] **Step 3: Verify**: `npm run build`; click through home/login/signup/verify/admin → no rose/orange remains except where Task 2.3 maps semantics; CTAs are violet→cyan.
 - [ ] **Step 4: Commit**
 
 ```bash
@@ -681,8 +681,8 @@ git commit -m "feat(theme): replace rose/orange with brand violet→cyan across 
 **Files:** `pages/index.jsx:27-35` (helpers), status dots/badges.
 
 - [ ] **Step 1:** Keep `online=emerald`, `degraded=amber`; change `offline` to `#e54b4f`. Add a text label/`title` to the card status dot (also satisfies the Phase 4 a11y item) so color isn't the only signal.
-- [ ] **Step 2:** Change the "LIVE" badge from `bg-rose-600` to brand `bg-[#6d35ff]` (or keep a dedicated semantic red — pick violet to stay on-brand) and the pulse to use the brand color.
-- [ ] **Step 3: Verify** — Monitor + cards show green/amber/red status, violet LIVE; no rose as a status hue.
+- [ ] **Step 2:** Change the "LIVE" badge from `bg-rose-600` to brand `bg-[#6d35ff]` (or keep a dedicated semantic red, pick violet to stay on-brand) and the pulse to use the brand color.
+- [ ] **Step 3: Verify**: Monitor + cards show green/amber/red status, violet LIVE; no rose as a status hue.
 - [ ] **Step 4: Commit**
 
 ```bash
@@ -695,7 +695,7 @@ git commit -m "feat(theme): semantic status colors + on-brand LIVE badge with te
 **Files:** `pages/index.jsx`, `pages/admin.jsx`.
 
 - [ ] **Step 1:** Replace `text-[9px]` → `text-[10px]`→ use `text-[11px]`/`text-xs` minimum; map all `text-[9px]`/`text-[10px]` labels onto `text-xs` (12px) for body-ish text, keeping `text-[11px]` only for true micro eyebrows. Use Geist Mono + `tabular-nums` for numeric stats/latency/uptime.
-- [ ] **Step 2: Verify** — labels legible; numbers use tabular figures (no width jitter).
+- [ ] **Step 2: Verify**: labels legible; numbers use tabular figures (no width jitter).
 - [ ] **Step 3: Commit**
 
 ```bash
@@ -713,7 +713,7 @@ git commit -m "feat(theme): legible type scale + tabular numerals for stats"
 - [ ] **Step 1:** Build shimmer skeleton components (pure CSS shimmer, respects reduced-motion).
 - [ ] **Step 2:** Add the violet grid + violet/cyan radial wash behind the hero/header (`index.jsx:889-894`).
 - [ ] **Step 3:** Use skeletons during initial load instead of empty flashes / spinners.
-- [ ] **Step 4: Verify** — `npm run build`; throttle network → skeletons show; hero has subtle violet ambiance.
+- [ ] **Step 4: Verify**: `npm run build`; throttle network → skeletons show; hero has subtle violet ambiance.
 - [ ] **Step 5: Commit**
 
 ```bash
@@ -726,7 +726,7 @@ git commit -m "feat(theme): branded skeleton loaders + violet/cyan ambient hero"
 **Files:** `lib/send-email.js:27,36,41,45`.
 
 - [ ] **Step 1:** Change the avatar bg `#7c3aed` → `#6d35ff`; the button `linear-gradient(135deg,#e11d48,#f97316)` → `linear-gradient(135deg,#6d35ff,#2ebfff)`; link colors `#7c3aed` → `#6d35ff`.
-- [ ] **Step 2: Verify** — trigger a signup (with Resend configured) → email matches brand.
+- [ ] **Step 2: Verify**: trigger a signup (with Resend configured) → email matches brand.
 - [ ] **Step 3: Commit**
 
 ```bash
@@ -736,7 +736,7 @@ git commit -m "feat(theme): brand the verification email violet→cyan"
 
 ---
 
-# Phase 3 — Real IPTV pillars  *(design-granularity; expand into its own plan before executing)*
+# Phase 3: Real IPTV pillars  *(design-granularity; expand into its own plan before executing)*
 
 **Goal:** Add the structural features that make a buyer say "this is an IPTV platform." Execution order within the phase as listed.
 
@@ -771,14 +771,14 @@ git commit -m "feat(theme): brand the verification email violet→cyan"
 
 ---
 
-# Phase 4 — Accessibility, routing & account UX  *(design-granularity; expand before executing)*
+# Phase 4: Accessibility, routing & account UX  *(design-granularity; expand before executing)*
 
 ### Task 4.1: Global focus-visible + accessible dialogs
 - **Files:** add a `:focus-visible` ring (violet) in `globals.css`; create `components/Dialog.jsx` (role="dialog", aria-modal, focus trap, Esc to close, focus restore, labelled by title); refactor the three modals (player, locked, import) to use it.
 - **Acceptance:** keyboard-only user can open/operate/close every modal; visible focus everywhere; passes an axe scan.
 
 ### Task 4.2: Real routing for views
-- **Files:** convert Browse/Watchlist/Monitor from `useState` tabs to routes — create `pages/watchlist.jsx`, `pages/monitor.jsx`, extract a shared `components/AppLayout.jsx` (nav/footer); make admin tabs query-param routes (`/admin?tab=users`). Add `aria-current` to active nav/pills.
+- **Files:** convert Browse/Watchlist/Monitor from `useState` tabs to routes, create `pages/watchlist.jsx`, `pages/monitor.jsx`, extract a shared `components/AppLayout.jsx` (nav/footer); make admin tabs query-param routes (`/admin?tab=users`). Add `aria-current` to active nav/pills.
 - **Acceptance:** views are linkable/bookmarkable; refresh keeps the view; Back button works.
 
 ### Task 4.3: Forms, labels, status regions, skip link, targets
@@ -792,7 +792,7 @@ git commit -m "feat(theme): brand the verification email violet→cyan"
 
 ---
 
-# Phase 5 — Operator platform  *(design-granularity; expand before executing)*
+# Phase 5: Operator platform  *(design-granularity; expand before executing)*
 
 ### Task 5.1: Admin channel/content CRUD
 - **Files:** new Admin "Channels" tab; `pages/api/admin/channels.js` (list/create/update/delete against `shared_channels`/`channels`); feature-flag + category management; choose featured channel (replaces auto `getFeatured`).
@@ -817,8 +817,8 @@ git commit -m "feat(theme): brand the verification email violet→cyan"
 
 ## Self-Review (completed against the audit spec)
 
-- **Spec coverage:** Every "expert gap" from the audit maps to a task — EPG (3.1), VOD/Series (3.2), wire dead features (1.1–1.3), fix admin (1.4), rebrand (2.x), Xtream (3.3), track controls (3.4), continue-watching (3.5), virtualization (3.6), focus/modals/routing/a11y (4.1–4.3), account page (4.4), admin CRUD (5.1), analytics (5.2), skeletons+Manrope (2.4–2.5), subscription (5.3). Every demo-disclaimer maps to Task 1.6/1.3/1.5.
-- **Bug coverage:** admin contract (1.4), watchlist non-persistence + volatile ids (1.1–1.2), health-check CORS misclassification (1.3), dead save/shared-channels (1.2).
+- **Spec coverage:** Every "expert gap" from the audit maps to a task: EPG (3.1), VOD/Series (3.2), wire dead features (1.1-1.3), fix admin (1.4), rebrand (2.x), Xtream (3.3), track controls (3.4), continue-watching (3.5), virtualization (3.6), focus/modals/routing/a11y (4.1-4.3), account page (4.4), admin CRUD (5.1), analytics (5.2), skeletons+Manrope (2.4-2.5), subscription (5.3). Every demo-disclaimer maps to Task 1.6/1.3/1.5.
+- **Bug coverage:** admin contract (1.4), watchlist non-persistence + volatile ids (1.1-1.2), health-check CORS misclassification (1.3), dead save/shared-channels (1.2).
 - **Type consistency:** `stableChannelId` (0.2) is used identically in 1.1, 1.2, and `shared-channels.js`; `cid` is the single watchlist key everywhere; `demoNotice(k)` keys match `DemoNotice` usages.
 - **Known prerequisite risk:** watchlist persistence + admin + resend require Supabase/Resend env vars; tasks degrade gracefully and show notices when unset.
 
@@ -826,8 +826,8 @@ git commit -m "feat(theme): brand the verification email violet→cyan"
 
 ## Execution Handoff
 
-**Phases 0–2 are ready to execute now.** Phases 3–5 should each be expanded into their own dated plan immediately before starting them.
+**Phases 0-2 are ready to execute now.** Phases 3-5 should each be expanded into their own dated plan immediately before starting them.
 
 Two execution options:
-1. **Subagent-Driven (recommended)** — dispatch a fresh subagent per task, review between tasks.
-2. **Inline Execution** — execute tasks in this session with checkpoints after each task.
+1. **Subagent-Driven (recommended)**: dispatch a fresh subagent per task, review between tasks.
+2. **Inline Execution**: execute tasks in this session with checkpoints after each task.

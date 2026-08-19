@@ -103,7 +103,7 @@ export default function EpgGuide({ channels, onPlay }) {
                           <button
                             key={i}
                             onClick={() => onPlay(c)}
-                            title={`${p.title} · ${fmtTime(p.start)}–${fmtTime(p.stop)}`}
+                            title={`${p.title} · ${fmtTime(p.start)}-${fmtTime(p.stop)}`}
                             className={`group absolute top-0 h-12 overflow-hidden rounded-lg border px-2 py-1 text-left transition-colors ${
                               isNow
                                 ? "border-[#6d35ff]/50 bg-[#6d35ff]/15 hover:bg-[#6d35ff]/25"
