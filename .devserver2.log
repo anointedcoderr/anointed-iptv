@@ -1,0 +1,11 @@
+
+> anointed-iptv@0.1.0 dev
+> next dev -p 41778
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:41778
+
+ ✓ Starting...
+ ✓ Ready in 11.2s
+ ○ Compiling /api/auth/signup ...
+ ✓ Compiled /api/auth/signup in 6.8s (77 modules)

@@ -1,0 +1,622 @@
+
+> anointed-iptv@0.1.0 dev
+> next dev -p 41777
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:41777
+
+ ✓ Starting...
+ ✓ Ready in 34.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 42.8s (874 modules)
+ ⨯ Error: Cannot find module 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\middleware-manifest.json'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\next-dev-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at DevServer.getMiddlewareManifest (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js:938:26)
+    at DevServer.getEdgeFunctionsPages (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js:954:31)
+    at NextNodeServer.handleCatchallRenderRequest (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js:238:49)
+    at async DevServer.handleRequestImpl (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\base-server.js:818:17)
+    at async C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\next-dev-server.js:339:20 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\next-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\next-dev-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\next.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\middleware-manifest.json'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\next-dev-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at DevServer.getMiddlewareManifest (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js:938:26)
+    at DevServer.getEdgeFunctionsPages (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js:954:31)
+    at NextNodeServer.handleCatchallRenderRequest (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\next-server.js:238:49)
+    at async DevServer.handleRequestImpl (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\base-server.js:818:17)
+    at async C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\next-dev-server.js:339:20 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\next-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\next-dev-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\next.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ○ Compiling /_error ...
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\cache\webpack\client-development\0.pack.gz'
+ ✓ Compiled /_error in 300.5s (742 modules)
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:151:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:78:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:77:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:151:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:78:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:77:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ○ Compiling / ...
+ ✓ Compiled / in 14.3s (874 modules)
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 10s (876 modules)
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './859.js'
+Require stack:
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_document.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\router-server.js
+- C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1517:15)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1617:12)
+    at mod.require (C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:220:28)
+    at C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:147:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\webpack-runtime.js:146:67)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\webpack-runtime.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\server\\pages\\_document.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET / 500 in 2442ms
+[Error: ENOENT: no such file or directory, stat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\cache\webpack\server-development\2.pack.gz'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'stat',
+  path: 'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\cache\\webpack\\server-development\\2.pack.gz'
+}
+ ⨯ unhandledRejection: [Error: ENOENT: no such file or directory, stat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\cache\webpack\server-development\2.pack.gz'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'stat',
+  path: 'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\cache\\webpack\\server-development\\2.pack.gz'
+}
+ ⨯ unhandledRejection: [Error: ENOENT: no such file or directory, stat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\cache\webpack\server-development\2.pack.gz'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'stat',
+  path: 'C:\\Projects\\Anointed Coder Projects\\anointed-iptv\\.next\\cache\\webpack\\server-development\\2.pack.gz'
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, mkdir 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\cache'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in 'C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js)
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in 'C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js)
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+ GET / 404 in 3481ms
+ GET / 404 in 1170ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in 'C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js)
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in 'C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js)
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in 'C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js)
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in 'C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected C:\Projects\Anointed Coder Projects\anointed-iptv\.next\server\pages\_app.js)
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Projects\Anointed Coder Projects\anointed-iptv\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ ✓ Compiled in 5.3s (876 modules)
+ GET / 200 in 26860ms
+ GET / 200 in 1529ms
+ GET /_next/static/chunks/main.js 404 in 582ms
+ GET /_next/static/chunks/react-refresh.js 404 in 876ms
+ GET /_next/static/chunks/pages/_app.js 404 in 856ms
